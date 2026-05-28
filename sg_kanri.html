@@ -1101,7 +1101,7 @@ function kApplyFilters(){
   const ys=document.getElementById('kfY')?.value||'';
   const ss=document.getElementById('kfS')?.value||'';
   kFiltered=kRecords.filter(r=>{
-    if(q&&![r.prno,r.kiki,r.vendor,r.anken].join(' ').toLowerCase().includes(q))return false;
+    if(q&&![r.prno,r.kiki,r.vendor,r.anken,r.y_status,r.s_status,r.kensa_result].join(' ').toLowerCase().includes(q))return false;
     if(an&&r.anken!==an)return false;
     if(ys==='none'&&r.y_status)return false;
     if(ys&&ys!=='none'&&r.y_status!==ys)return false;
@@ -1312,8 +1312,4 @@ window.deleteManualTask=deleteManualTask;
 
 } catch(criticalError) {
   console.error('起動エラー:',criticalError);
-  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
-}
-</script>
-</body>
-</html>
+  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.
