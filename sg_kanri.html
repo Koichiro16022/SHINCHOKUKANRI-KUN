@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>進捗管理くん</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--primary:#ff6b6b;--primary-dark:#e05555;--blue:#5B5FEF;--blue-dark:#4346C9;--bg:#f8f9fa;--card:#fff;--text:#333;--muted:#888;--border:#eee;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;background:var(--bg);min-height:100vh;overflow-x:hidden;}
+
+/* ── TOP NAV ── */
+.top-nav{background:#fff;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.nav-btn{padding:9px 22px;border:2px solid var(--border);border-radius:25px;background:#fff;color:var(--muted);font-size:13px;font-weight:bold;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:6px;}
+.nav-btn:hover{border-color:#bbb;color:var(--text);}
+.nav-btn.active-oshi{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(255,107,107,.35);}
+.nav-btn.active-kensa{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 4px 12px rgba(91,95,239,.35);}
+.nav-btn.settings-btn{margin-left:auto;}
+
+/* ── PANELS ── */
+.app-panel{display:none;max-width:960px;margin:0 auto;padding:20px 16px;}
+.app-panel.active{display:block;}
+
+/* ── 推し事管理: カード ── */
+.panel{background:var(--card);padding:20px;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,.05);margin-bottom:20px;width:100%;}
+.main-wrapper{display:flex;gap:20px;}
+.right-col{flex:1.5;width:100%;}
+@media(max-width:750px){.main-wrapper{flex-direction:column;}}
+
+/* フォーム */
+input,select{width:100%;padding:11px;margin-top:8px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:15px;outline:none;font-family:inherit;}
+.row-group{display:flex;gap:8px;align-items:center;margin-top:8px;}
+.row-group label{font-size:12px;color:#666;white-space:nowrap;}
+#add-btn{width:100%;background:var(--primary);color:#fff;border:none;padding:14px;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:10px;font-size:15px;transition:.2s;}
+#add-btn:hover{background:var(--primary-dark);}
+#add-btn.edit-mode{background:#2196f3;}
+.warn-msg{color:#e65100;font-size:12px;margin-top:4px;display:none;}
+
+/* タスクリスト */
+ul{list-style:none;padding:0;margin:0;width:100%;}
+li.task-item{background:#fff;padding:14px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 3px 6px rgba(0,0,0,.04);gap:10px;border-left:14px solid var(--primary);}
+.btn-group{display:flex;gap:7px;flex-shrink:0;}
+.complete-btn{background:#4caf50;color:#fff;border:none;padding:9px 13px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:12px;}
+.edit-task-btn{background:#2196f3;color:#fff;border:none;padding:9px 13px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:12px;}
+.delete-task-btn{background:#aaa;color:#fff;border:none;padding:9px 13px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:12px;}
+.notify-done-badge{font-size:10px;color:#fff;background:#bbb;border-radius:10px;padding:2px 7px;margin-top:3px;display:inline-block;}
+
+/* アーカイブ */
+.archive-section{width:100%;}
+.archive-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.archive-header h3{margin:0;color:#888;font-size:1rem;flex:1;}
+.toggle-archive-btn,.clear-archive-btn{background:#aaa;color:#fff;border:none;padding:6px 14px;border-radius:15px;cursor:pointer;font-size:12px;font-weight:bold;}
+#archive-list li{background:#f5f5f5;padding:12px 15px;border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-left:14px solid #bbb;opacity:.85;}
+.restore-btn{background:#e8f5e9;border:1px solid #a5d6a7;color:#388e3c;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:11px;white-space:nowrap;font-weight:bold;}
+.archive-delete-btn{background:#888;border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;}
+.completed-at{font-size:10px;color:#bbb;margin-top:2px;}
+
+/* カウントダウン */
+#countdown-area{width:100%;margin-bottom:14px;display:none;}
+.countdown-card{background:linear-gradient(135deg,#e05a7a,#ff9a9a);color:#fff;border-radius:15px;padding:18px 24px;text-align:center;box-shadow:0 5px 20px rgba(0,0,0,.2);}
+#countdown-label{font-size:.92rem;font-weight:bold;opacity:.92;margin-bottom:5px;}
+#countdown-timer{font-size:2rem;font-weight:bold;letter-spacing:3px;}
+#countdown-tasks{font-size:.8rem;margin-top:6px;opacity:.85;}
+
+/* 推し管理 */
+.oshi-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f9f9f9;border-radius:10px;margin-bottom:6px;}
+.oshi-color-dot{width:18px;height:18px;border-radius:50%;border:2px solid #ddd;flex-shrink:0;}
+.oshi-name{flex:1;font-size:13px;font-weight:bold;}
+.color-swatches{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.color-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid #ddd;transition:transform .15s,border-color .15s;flex-shrink:0;}
+.color-swatch:hover{transform:scale(1.2);}
+.color-swatch.active{border-color:#555;box-shadow:0 0 0 2px #555;transform:scale(1.1);}
+.phrase-input-row{display:flex;gap:8px;margin-top:8px;}
+.phrase-add-btn{background:var(--primary);color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;white-space:nowrap;}
+.phrase-list{list-style:none;padding:0;margin:8px 0 0;}
+.phrase-list li{display:flex;align-items:center;gap:6px;padding:6px 10px;background:#f9f9f9;border-radius:8px;margin-bottom:5px;font-size:13px;}
+.phrase-list li span{flex:1;word-break:break-all;}
+.phrase-edit-btn{background:#2196f3;color:#fff;border:none;padding:4px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;}
+.phrase-delete-btn{background:#aaa;color:#fff;border:none;padding:4px 9px;border-radius:6px;cursor:pointer;font-size:11px;font-weight:bold;}
+.quiet-toggle-btn{border:none;padding:6px 18px;border-radius:15px;cursor:pointer;font-size:12px;font-weight:bold;}
+.quiet-toggle-btn.off{background:#ddd;color:#888;}
+.quiet-toggle-btn.on{background:#5c6bc0;color:#fff;}
+.data-mgmt-btn{background:#555;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:bold;margin-top:6px;}
+.data-mgmt-btn:hover{background:#333;}
+.collection-item{width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid #eee;position:relative;}
+.collection-item img{width:100%;height:100%;object-fit:cover;}
+.delete-img{position:absolute;top:0;right:0;background:rgba(0,0,0,.7);color:#fff;padding:2px 6px;cursor:pointer;font-size:12px;}
+#collection-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(60px,1fr));gap:8px;margin-top:10px;border-top:1px solid #eee;padding-top:10px;}
+.main-event-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.main-event-row input[type=checkbox]{width:auto;margin:0;cursor:pointer;accent-color:var(--primary);width:15px;height:15px;}
+.main-event-row label{font-size:13px;color:#555;cursor:pointer;font-weight:bold;user-select:none;}
+.bg-color-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+
+/* ── 検査図書管理: スタイル ── */
+.k-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px;}
+.k-stat{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 3px 8px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;border-left:3px solid #ccc;}
+.k-stat.c1{border-color:var(--blue)}.k-stat.c2{border-color:#10B981}.k-stat.c3{border-color:#F97316}.k-stat.c4{border-color:#EF4444}
+.k-stat-icon{font-size:22px;}
+.k-stat-num{font-size:20px;font-weight:800;line-height:1;}
+.k-stat-label{font-size:11px;color:var(--muted);margin-top:1px;}
+
+.k-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center;}
+.k-search{position:relative;flex:1;min-width:180px;}
+.k-search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);}
+.k-search input{padding:9px 10px 9px 32px;border:1.5px solid #ddd;border-radius:25px;font-size:13px;margin:0;}
+.k-search input:focus{border-color:var(--blue);}
+.k-filters{display:flex;gap:7px;flex-wrap:wrap;}
+.k-filters select{padding:8px 10px;border:1.5px solid #ddd;border-radius:25px;font-size:12px;margin:0;background:#fff;cursor:pointer;}
+.k-filters select:focus{border-color:var(--blue);}
+.kbtn{padding:8px 15px;border:none;border-radius:25px;font-size:12px;font-weight:bold;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;}
+.kbtn-primary{background:var(--blue);color:#fff;}
+.kbtn-primary:hover{background:var(--blue-dark);}
+.kbtn-outline{background:#fff;color:var(--blue);border:1.5px solid var(--blue);}
+.kbtn-outline:hover{background:#eef0ff;}
+.kbtn-success{background:#10B981;color:#fff;}
+.kbtn-sm{padding:5px 11px;font-size:11px;}
+
+.k-card{background:#fff;border-radius:12px;box-shadow:0 3px 8px rgba(0,0,0,.06);overflow:hidden;margin-bottom:16px;}
+.k-card-hd{padding:10px 16px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);}
+table.k-tbl{width:100%;border-collapse:collapse;}
+table.k-tbl thead tr{background:#FAFBFF;}
+table.k-tbl th{padding:9px 11px;font-size:11px;font-weight:700;color:var(--muted);text-align:left;border-bottom:1.5px solid #eee;white-space:nowrap;cursor:pointer;user-select:none;}
+table.k-tbl th:hover{color:var(--blue);}
+table.k-tbl th.sorted{color:var(--blue);}
+table.k-tbl tbody tr{border-bottom:1px solid #eee;transition:background .1s;}
+table.k-tbl tbody tr:last-child{border-bottom:none;}
+table.k-tbl tbody tr:hover{background:#F8FAFF;}
+table.k-tbl td{padding:8px 11px;font-size:12px;vertical-align:middle;}
+.tbl-scroll{overflow-x:auto;}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;}
+.bg-green{background:#D1FAE5;color:#065F46;}
+.bg-blue{background:#DBEAFE;color:#1E40AF;}
+.bg-orange{background:#FEF3C7;color:#92400E;}
+.bg-gray{background:#F1F5F9;color:#64748B;}
+.bg-purple{background:#EDE9FE;color:#5B21B6;}
+.bg-red{background:#FEE2E2;color:#991B1B;}
+.bg-cyan{background:#CFFAFE;color:#155E75;}
+
+.anken-tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;}
+.act-btns{display:flex;gap:4px;}
+.icon-btn{width:26px;height:26px;border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;}
+.ib-edit{background:#EEF2FF;color:var(--blue);}
+.ib-edit:hover{background:var(--blue);color:#fff;}
+.ib-del{background:#FEE2E2;color:#EF4444;}
+.ib-del:hover{background:#EF4444;color:#fff;}
+
+.k-pg{padding:10px 16px;border-top:1px solid #eee;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);}
+.pg-btns{display:flex;gap:3px;}
+.pg{width:27px;height:27px;border:1px solid #ddd;background:#fff;border-radius:5px;cursor:pointer;font-size:11px;font-weight:bold;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.pg:hover,.pg.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+/* 検査予定カード */
+.sched-list{display:flex;flex-direction:column;gap:7px;}
+.sched-card{background:#fff;border-radius:10px;padding:11px 14px;box-shadow:0 2px 6px rgba(0,0,0,.05);display:flex;align-items:center;gap:12px;border-left:3px solid #ddd;}
+.sched-card.future{border-color:var(--blue);}
+.sched-card.today{border-color:var(--primary);background:#FFF5F5;}
+.sched-card.past{border-color:#10B981;opacity:.75;}
+.sched-date{min-width:80px;text-align:center;}
+.sched-date .dd{font-size:20px;font-weight:800;line-height:1;}
+.sched-date .ym{font-size:10px;color:var(--muted);}
+.sched-info{flex:1;}
+.sched-kiki{font-weight:bold;font-size:13px;}
+.sched-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* ドロップゾーン */
+.drop-zone{border:2px dashed #ddd;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa;}
+.drop-zone:hover,.drop-zone.dov{border-color:var(--blue);background:#EEF0FF;}
+.drop-zone .dz-icon{font-size:36px;margin-bottom:8px;}
+
+/* モーダル */
+.k-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.k-overlay.open{opacity:1;pointer-events:all;}
+.k-modal{background:#fff;border-radius:14px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.2);transform:translateY(14px);transition:transform .2s;}
+.k-overlay.open .k-modal{transform:none;}
+.k-modal-hd{padding:16px 20px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;}
+.k-modal-hd h2{font-size:15px;font-weight:bold;}
+.k-modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+.k-modal-ft{padding:12px 20px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end;}
+.k-close{width:28px;height:28px;border:none;border-radius:6px;background:#eee;color:#888;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
+.k-close:hover{background:#ddd;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.fg input,.fg select,.fg textarea{margin:0;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;}
+.fg textarea{resize:vertical;min-height:55px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-grid .full{grid-column:1/-1;}
+.sec-label{font-size:11px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;padding-top:4px;border-top:1px solid #EEF0FF;}
+
+/* 褒めエフェクト（推し事から流用） */
+#praise-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);display:none;justify-content:center;align-items:center;z-index:2000;cursor:pointer;}
+.praise-card{max-width:85vw;max-height:85vh;background:#fff;border-radius:25px;overflow:hidden;box-shadow:0 0 50px var(--primary);position:relative;z-index:2001;animation:popInOut 4.5s ease-in-out forwards;display:flex;align-items:center;justify-content:center;}
+@keyframes popInOut{0%{transform:scale(.6);opacity:0}10%{transform:scale(1);opacity:1}90%{transform:scale(1);opacity:1}100%{transform:scale(.9);opacity:0}}
+#praise-img{max-width:85vw;max-height:85vh;width:auto;height:auto;display:block;}
+.shower-word{position:fixed;color:#fff;font-weight:bold;font-size:1.7rem;text-shadow:0 0 10px rgba(255,107,107,.8),2px 2px 4px #000;z-index:2002;white-space:nowrap;pointer-events:none;animation:showerFall 2.2s ease-out forwards;}
+@keyframes showerFall{0%{transform:scale(.5);opacity:0}20%{transform:scale(1.1);opacity:1}100%{transform:scale(1) translateY(-110px);opacity:0}}
+canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
+
+/* ヘルプ */
+.help-section{margin-bottom:18px;}
+.help-section h3{font-size:14px;font-weight:bold;color:#444;margin:0 0 6px;padding-bottom:5px;border-bottom:2px solid #eee;}
+.help-section p{font-size:13px;color:#555;line-height:1.7;margin:0;white-space:pre-wrap;}
+
+/* トースト */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;}
+.toast{background:#fff;border-radius:8px;padding:10px 15px;box-shadow:0 4px 16px rgba(0,0,0,.14);font-size:12px;font-weight:bold;display:flex;align-items:center;gap:7px;border-left:3px solid #10B981;min-width:190px;animation:ti .25s ease;}
+.toast.err{border-color:#EF4444;}
+@keyframes ti{from{transform:translateX(50px);opacity:0}to{transform:none;opacity:1}}
+
+#img-loading{font-size:12px;color:#888;margin-top:4px;display:none;}
+</style>
+</head>
+<body>
+<canvas id="fireworks"></canvas>
+<div id="praise-overlay"><div class="praise-card"><img id="praise-img" src="" alt=""></div></div>
+<div class="toasts" id="toasts"></div>
+
+<!-- TOP NAV -->
+<nav class="top-nav">
+  <button class="nav-btn active-oshi" id="nav-oshi" onclick="switchPanel('oshi')">💼 推し事管理</button>
+  <button class="nav-btn" id="nav-kensa" onclick="switchPanel('kensa')">🔬 検査図書管理</button>
+  <button class="nav-btn settings-btn" id="nav-settings" onclick="switchPanel('settings')">⚙️ 設定</button>
+</nav>
+
+<!-- ━━━━━━━━━━━━━━━ PANEL: 推し事管理 ━━━━━━━━━━━━━━━ -->
+<div class="app-panel active" id="panel-oshi">
+  <div id="countdown-area">
+    <div class="countdown-card">
+      <div id="countdown-label"></div>
+      <div id="countdown-timer"></div>
+      <div id="countdown-tasks"></div>
+    </div>
+  </div>
+
+  <div class="main-wrapper">
+    <div class="right-col">
+      <div class="panel">
+        <h2 style="margin:0 0 14px;color:#444;font-size:1.25rem;text-align:center;">📊 進捗管理くん 📊</h2>
+        <div class="row-group">
+          <input type="date" id="date-input" style="flex:1.5;">
+          <input type="time" id="time-input" style="flex:1;">
+        </div>
+        <div class="warn-msg" id="datetime-warn">⚠️ 時刻を設定するには日付も入力してください</div>
+        <div class="row-group">
+          <label>🔁 再通知:</label>
+          <select id="interval-input">
+            <option value="0">なし</option>
+            <option value="1">1分ごと</option>
+            <option value="5">5分ごと</option>
+            <option value="10">10分ごと</option>
+            <option value="30">30分ごと</option>
+            <option value="60">1時間ごと</option>
+            <option value="1440">1日ごと</option>
+          </select>
+        </div>
+        <div class="row-group">
+          <label>🔔 再通知上限:</label>
+          <select id="max-notify-input">
+            <option value="0">無制限</option>
+            <option value="3">3回</option>
+            <option value="5">5回</option>
+            <option value="10">10回</option>
+          </select>
+        </div>
+        <div class="row-group">
+          <label>⭐ カテゴリ:</label>
+          <select id="oshi-select"><option value="-1">未選択</option></select>
+        </div>
+        <div class="main-event-row">
+          <input type="checkbox" id="main-event-input">
+          <label for="main-event-input">⭐ メインイベント（カウントダウン対象）</label>
+        </div>
+        <input type="text" id="todo-input" placeholder="次のタスクは何？">
+        <button id="add-btn">タスクを追加</button>
+      </div>
+      <ul id="todo-list"></ul>
+      <div class="archive-section" style="margin-top:8px;">
+        <div class="archive-header">
+          <h3>📦 完了アーカイブ (<span id="archive-count">0</span>)</h3>
+          <button class="toggle-archive-btn" onclick="toggleArchive()">▼ 表示</button>
+          <button class="clear-archive-btn" onclick="clearArchive()">全削除</button>
+        </div>
+        <ul id="archive-list" style="display:none;"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━ PANEL: 検査図書管理 ━━━━━━━━━━━━━━━ -->
+<div class="app-panel" id="panel-kensa">
+  <!-- タブ -->
+  <div style="display:flex;gap:0;background:#fff;border-radius:12px;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px;">
+    <button class="kbtn kbtn-primary" id="ktab-dash" onclick="openKTab('dash')" style="flex:1;border-radius:8px;">📊 ダッシュボード</button>
+    <button class="kbtn" id="ktab-list" onclick="openKTab('list')" style="flex:1;border-radius:8px;background:transparent;color:#888;">📋 マスターリスト</button>
+    <button class="kbtn" id="ktab-sched" onclick="openKTab('sched')" style="flex:1;border-radius:8px;background:transparent;color:#888;">📅 検査予定</button>
+    <button class="kbtn" id="ktab-import" onclick="openKTab('import')" style="flex:1;border-radius:8px;background:transparent;color:#888;">📥 インポート</button>
+  </div>
+
+  <!-- ダッシュボード -->
+  <div id="kpanel-dash">
+    <div class="k-stats" id="kStatsGrid"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <h3 style="font-size:13px;font-weight:bold;margin-bottom:10px;">📅 直近の検査（30日以内）</h3>
+        <div id="kUpcomingList"></div>
+      </div>
+      <div>
+        <h3 style="font-size:13px;font-weight:bold;margin-bottom:10px;">⚠️ 成績書 未発行（要領書済）</h3>
+        <div id="kPendingList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- マスターリスト -->
+  <div id="kpanel-list" style="display:none;">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="kSearch" placeholder="PRNo・機器名称・ベンダーで検索…" oninput="kApplyFilters()">
+      </div>
+      <div class="k-filters">
+        <select id="kfAnken" onchange="kApplyFilters()"><option value="">案件すべて</option></select>
+        <select id="kfY" onchange="kApplyFilters()">
+          <option value="">要領書すべて</option>
+          <option value="発行済">✅ 発行済</option>
+          <option value="ブランクフォーマット確認済">BF確認済</option>
+          <option value="発行予定">予定</option>
+          <option value="none">未</option>
+        </select>
+        <select id="kfS" onchange="kApplyFilters()">
+          <option value="">成績書すべて</option>
+          <option value="発行済">✅ 発行済</option>
+          <option value="pending">❌ 未発行</option>
+        </select>
+        <button class="kbtn kbtn-outline kbtn-sm" onclick="kClearFilters()">✕</button>
+      </div>
+      <button class="kbtn kbtn-success kbtn-sm" onclick="kExportCSV()">⬇ CSV</button>
+      <button class="kbtn kbtn-primary kbtn-sm" onclick="kOpenAdd()">＋ 登録</button>
+    </div>
+    <div class="k-card">
+      <div class="k-card-hd"><span id="kResultCount">0件</span><span id="kPageInfo"></span></div>
+      <div class="tbl-scroll">
+        <table class="k-tbl">
+          <thead>
+            <tr>
+              <th onclick="kSort('anken')" data-col="anken">案件名</th>
+              <th onclick="kSort('prno')" data-col="prno">PRNo</th>
+              <th onclick="kSort('kiki')" data-col="kiki">機器名称</th>
+              <th onclick="kSort('rev')" data-col="rev">Rev.</th>
+              <th onclick="kSort('vendor')" data-col="vendor">ベンダー</th>
+              <th onclick="kSort('y_status')" data-col="y_status">要領書</th>
+              <th onclick="kSort('s_status')" data-col="s_status">成績書</th>
+              <th onclick="kSort('kensa_date')" data-col="kensa_date">検査日</th>
+              <th onclick="kSort('kensa_result')" data-col="kensa_result">結果</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="kTableBody"></tbody>
+        </table>
+      </div>
+      <div class="k-pg"><span id="kPgInfo"></span><div class="pg-btns" id="kPgBtns"></div></div>
+    </div>
+  </div>
+
+  <!-- 検査予定 -->
+  <div id="kpanel-sched" style="display:none;">
+    <div class="k-toolbar">
+      <div class="k-search">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="kSchedSearch" placeholder="機器名称・PRNoで検索…" oninput="kRenderSched()">
+      </div>
+      <div class="k-filters">
+        <select id="kSchedAnken" onchange="kRenderSched()"><option value="">案件すべて</option></select>
+        <select id="kSchedPeriod" onchange="kRenderSched()">
+          <option value="">期間すべて</option>
+          <option value="past">過去</option>
+          <option value="week">今後1週間</option>
+          <option value="month">今後1ヶ月</option>
+          <option value="future">今後すべて</option>
+          <option value="unset">未定</option>
+        </select>
+      </div>
+    </div>
+    <div class="sched-list" id="kSchedList"></div>
+  </div>
+
+  <!-- インポート -->
+  <div id="kpanel-import" style="display:none;max-width:520px;">
+    <h3 style="margin-bottom:10px;">📥 Excelインポート</h3>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:14px;line-height:1.6;">週報Excelファイル（.xlsx）をドロップして最新データを取り込みます。<br>同一PRNo+機器名称のレコードは上書きされます。</p>
+    <div class="drop-zone" id="kDropZone" onclick="document.getElementById('kFileInput').click()"
+         ondragover="kDzOver(event)" ondragleave="kDzLeave()" ondrop="kDzDrop(event)">
+      <div class="dz-icon">📂</div>
+      <p style="color:var(--muted);font-size:13px;">ここにExcelをドロップ、またはクリックして選択</p>
+    </div>
+    <input type="file" id="kFileInput" accept=".xlsx" style="display:none" onchange="kImportFile(this.files[0])">
+    <div id="kImportLog" style="margin-top:12px;font-size:12px;color:var(--muted);"></div>
+  </div>
+</div>
+
+<!-- ━━━━━━━━━━━━━━━ PANEL: 設定 ━━━━━━━━━━━━━━━ -->
+<div class="app-panel" id="panel-settings">
+  <div class="panel">
+    <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
+      <label style="font-weight:bold;font-size:14px;">👑 カテゴリ管理 <span style="font-weight:normal;font-size:12px;color:#999;">（タスクの色分け・最大5つ）</span></label>
+      <div class="color-swatches oshi-swatches" style="margin-top:10px;">
+        <div class="color-swatch" style="background:#888;" onclick="setOshiColor('#888888')"></div>
+        <div class="color-swatch" style="background:#FF0000;" onclick="setOshiColor('#FF0000')"></div>
+        <div class="color-swatch" style="background:#FF66CC;" onclick="setOshiColor('#FF66CC')"></div>
+        <div class="color-swatch" style="background:#FF6600;" onclick="setOshiColor('#FF6600')"></div>
+        <div class="color-swatch" style="background:#FFFF00;" onclick="setOshiColor('#FFFF00')"></div>
+        <div class="color-swatch" style="background:#00B050;" onclick="setOshiColor('#00B050')"></div>
+        <div class="color-swatch" style="background:#00B0F0;" onclick="setOshiColor('#00B0F0')"></div>
+        <div class="color-swatch" style="background:#0070C0;" onclick="setOshiColor('#0070C0')"></div>
+        <div class="color-swatch" style="background:#7030A0;" onclick="setOshiColor('#7030A0')"></div>
+      </div>
+      <div class="phrase-input-row" style="margin-top:8px;">
+        <input type="text" id="oshi-name-input" placeholder="カテゴリ名（例：検査、報告書、会議）" style="flex:1;margin-top:0;">
+        <input type="color" id="oshi-color-input" value="#e91e63" style="width:40px;height:40px;padding:2px;border:1px solid #ddd;border-radius:6px;cursor:pointer;margin-top:0;flex-shrink:0;">
+        <button class="phrase-add-btn" onclick="addOshi()">追加</button>
+      </div>
+      <div id="oshi-list" style="margin-top:10px;"></div>
+    </div>
+    <label style="font-weight:bold;font-size:14px;">📸 画像コレクション<span style="font-weight:normal;font-size:12px;color:#999;">（完了時に表示・10枚まで）</span></label>
+    <input type="file" accept="image/*" id="file-input" multiple style="margin-top:10px;">
+    <div id="img-loading">📷 処理中...</div>
+    <div id="collection-container"></div>
+    <div style="margin-top:10px;"><button onclick="resetImages()" style="font-size:11px;background:none;border:1px solid #ccc;cursor:pointer;padding:5px 10px;border-radius:6px;">🖼️ 画像をリセット</button></div>
+
+    <div style="margin-top:18px;">
+      <label style="font-weight:bold;font-size:14px;">🎨 背景色</label>
+      <div class="color-swatches" style="margin-top:8px;">
+        <div class="color-swatch" data-color="#f8f9fa" style="background:#f8f9fa;"></div>
+        <div class="color-swatch" data-color="#ffffff" style="background:#fff;"></div>
+        <div class="color-swatch" data-color="#ffe0e0" style="background:#ffe0e0;"></div>
+        <div class="color-swatch" data-color="#ffe0f0" style="background:#ffe0f0;"></div>
+        <div class="color-swatch" data-color="#e0eeff" style="background:#e0eeff;"></div>
+        <div class="color-swatch" data-color="#e0ffe0" style="background:#e0ffe0;"></div>
+        <div class="color-swatch" data-color="#f0e0ff" style="background:#f0e0ff;"></div>
+      </div>
+      <div class="bg-color-row"><label style="font-size:12px;color:#666;">カスタム:</label><input type="color" id="bg-color-input" value="#f8f9fa" style="width:34px;height:28px;padding:2px;border:1px solid #ddd;border-radius:5px;cursor:pointer;margin:0;"></div>
+    </div>
+    <div style="margin-top:18px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <label style="font-weight:bold;font-size:14px;flex:1;">💬 褒め言葉 <span style="font-weight:normal;font-size:12px;color:#999;">（20個まで）</span></label>
+        <button style="background:#aaa;color:#fff;border:none;padding:5px 12px;border-radius:12px;cursor:pointer;font-size:11px;font-weight:bold;" onclick="clearPhrases('praise')">全削除</button>
+        <button style="background:#aaa;color:#fff;border:none;padding:5px 12px;border-radius:12px;cursor:pointer;font-size:11px;font-weight:bold;" onclick="togglePhrase('praise')" id="toggle-praise-btn">▼ 表示</button>
+      </div>
+      <div id="praise-phrase-body" style="display:none;">
+        <div class="phrase-input-row"><input type="text" id="praise-new-input" placeholder="例：天才！" style="flex:1;margin-top:0;"><button class="phrase-add-btn" onclick="addPhrase('praise')">登録</button></div>
+        <ul id="praise-phrase-list" class="phrase-list"></ul>
+      </div>
+    </div>
+    <div style="margin-top:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <label style="font-weight:bold;font-size:14px;flex:1;">⏰ リマインダー文言 <span style="font-weight:normal;font-size:12px;color:#999;">（20個まで）</span></label>
+        <button style="background:#aaa;color:#fff;border:none;padding:5px 12px;border-radius:12px;cursor:pointer;font-size:11px;font-weight:bold;" onclick="clearPhrases('remind')">全削除</button>
+        <button style="background:#aaa;color:#fff;border:none;padding:5px 12px;border-radius:12px;cursor:pointer;font-size:11px;font-weight:bold;" onclick="togglePhrase('remind')" id="toggle-remind-btn">▼ 表示</button>
+      </div>
+      <div id="remind-phrase-body" style="display:none;">
+        <div class="phrase-input-row"><input type="text" id="remind-new-input" placeholder="例：時間だよ！" style="flex:1;margin-top:0;"><button class="phrase-add-btn" onclick="addPhrase('remind')">登録</button></div>
+        <ul id="remind-phrase-list" class="phrase-list"></ul>
+      </div>
+    </div>
+    <div style="margin-top:18px;border-top:1px solid #eee;padding-top:14px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label style="font-weight:bold;font-size:14px;flex:1;">🌙 おやすみモード</label>
+        <button id="quiet-mode-toggle" class="quiet-toggle-btn off" onclick="toggleQuietMode()">OFF</button>
+      </div>
+      <div style="margin-top:8px;">
+        <div class="row-group">
+          <label>開始:</label><input type="time" id="quiet-start" value="23:00" style="flex:1;margin-top:0;">
+          <label>終了:</label><input type="time" id="quiet-end" value="07:00" style="flex:1;margin-top:0;">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:18px;border-top:1px solid #eee;padding-top:14px;">
+      <label style="font-weight:bold;font-size:14px;">💾 データ管理</label>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <button onclick="exportData()" class="data-mgmt-btn">📤 保存する</button>
+        <button onclick="document.getElementById('import-file-input').click()" class="data-mgmt-btn">📥 読み込む</button>
+        <input type="file" id="import-file-input" accept=".json" style="display:none;">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 検査図書 編集モーダル -->
+<div class="k-overlay" id="kOverlay" onclick="kBgClose(event)">
+  <div class="k-modal">
+    <div class="k-modal-hd">
+      <h2><span id="kMIcon">📝</span> <span id="kMTitle">新規登録</span></h2>
+      <button class="k-close" onclick="kCloseModal()">✕</button>
+    </div>
+    <div class="k-modal-body">
+      <div class="sec-label">基本情報</div>
+      <div class="form-grid">
+        <div class="fg"><label>案件名 *</label><input id="kf-anken" list="anken-dl" placeholder="例: 湖南"></div>
+        <div class="fg"><label>PRNo *</label><input id="kf-prno" placeholder="例: 23-084-04752"></div>
+        <div class="fg full"><label>機器名称 *</label><input id="kf-kiki" placeholder="例: ケーキ投入ポンプ"></div>
+        <div class="fg"><label>Rev.</label><input id="kf-rev" placeholder="例: O"></div>
+        <div class="fg"><label>ベンダー名</label><input id="kf-vendor"></div>
+      </div>
+      <div class="sec-label">検査要領書</div>
+      <div class="form-grid">
+        <div class="fg"><label>発行状況</label>
+          <select id="kf-ystatus"><option value="">（未）</option><option value="発行済">発行済</option><option value="ブランクフォーマット確認済">BF確認済</option><option value="発行予定">発行予定</option></select>
+        </div>
+        <div class="fg"><label>備考</label><input id="kf-ybiko"></div>
+      </div>
+      <div class="sec-label">検査成績書</div>
+      <div class="form-grid">
+        <div class="fg"><label>発行状況</label>
+          <select id="kf-sstatus"><option value="">（未）</option><option value="発行済">発行済</option><option value="発行予定">発行予定</option><option value="回覧中">回覧中</option><option value="特採発行待ち">特採発行待ち</option><option value="未定">未定</option></select>
+        </div>
+        <div class="fg"><label>発行予定日・備考</label><input id="kf-sbiko" placeholder="例: 2026-06-01"></div>
+      </div>
+      <div class="sec-label">検査予定</div>
+      <div class="form-grid">
+        <div class="fg"><label>検査日</label><input id="kf-kdate" placeholder="例: 2026-07-01 or 未定"></div>
+        <div class="fg"><label>区分</label><select id="kf-kubun"><option value="">—</option><option value="社内">社内</option><option value="現地">現地</option></select></div>
+        <div class="fg"><label>検査場所</label><input id="kf-place"></div>
+        <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
+        <div class="fg full"><label>検査結果</label>
+          <select id="kf-result"><option value="">（未実施）</option><option value="合格">合格</option><option value="不合格">不合格</option><option value="保留">保留</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="k-modal-ft">
+      <button class="kbtn kbtn-outline" onclick="kCloseModal()">キャンセル</button>
+      <button class="kbtn kbtn-primary" onclick="kSaveRecord()">💾 保存</button>
+    </div>
+  </div>
+</div>
+<datalist id="anken-dl"></datalist>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SHARED: エフェクト・オーディオ
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+try {
+let audioCtx, showerActive=false;
+function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}}
+function playBeep(){if(!audioCtx)return;try{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.1,audioCtx.currentTime);o.start();g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.5);o.stop(audioCtx.currentTime+.5)}catch(e){}}
+document.body.addEventListener('mousedown',initAudio,{once:true});
+document.body.addEventListener('touchstart',initAudio,{once:true});
+
+const canvas=document.getElementById('fireworks'),ctx=canvas.getContext('2d');
+let particles=[];
+function startFireworks(){particles=[];for(let i=0;i<80;i++)particles.push({x:window.innerWidth/2,y:window.innerHeight/2,dx:(Math.random()-.5)*20,dy:(Math.random()-.5)*20,c:`hsl(${Math.random()*360},100%,60%)`,l:100});}
+function animate(){ctx.clearRect(0,0,canvas.width,canvas.height);particles=particles.filter(p=>{p.x+=p.dx;p.y+=p.dy;p.dy+=.1;p.l-=1;if(p.l<=0)return false;ctx.fillStyle=p.c;ctx.globalAlpha=p.l/100;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();return true;});ctx.globalAlpha=1;requestAnimationFrame(animate);}
+window.addEventListener('resize',()=>{canvas.width=window.innerWidth;canvas.height=window.innerHeight;});
+
+let imageCollection=[],imageQueue=[];
+function getNextImage(){if(!imageCollection.length)return null;imageQueue=imageQueue.filter(s=>imageCollection.includes(s));if(!imageQueue.length)imageQueue=[...imageCollection].sort(()=>Math.random()-.5);const img=imageQueue.shift();try{localStorage.setItem('sg_imgqueue',JSON.stringify(imageQueue))}catch(e){}return img;}
+
+function showShowerEffect(wordSource,topWord){
+  if(showerActive)return;showerActive=true;
+  const words=(wordSource||'').split(',').map(w=>w.trim()).filter(Boolean);
+  const safeWords=words.length>0?words:['やったね！'];
+  const overlay=document.getElementById('praise-overlay'),img=document.getElementById('praise-img');
+  if(imageCollection.length>0){img.src=getNextImage();overlay.style.display='flex';}
+  for(let i=0;i<15;i++){setTimeout(()=>{const d=document.createElement('div');d.className='shower-word';d.textContent=(i===0&&topWord)?topWord:safeWords[Math.floor(Math.random()*safeWords.length)];d.style.left=(Math.random()*70+15)+'%';d.style.top=(Math.random()*70+15)+'%';document.body.appendChild(d);setTimeout(()=>{if(d.parentNode)d.parentNode.removeChild(d);},2200);},i*150);}
+  startFireworks();
+  setTimeout(()=>{overlay.style.display='none';showerActive=false;},4500);
+}
+document.getElementById('praise-overlay').addEventListener('click',()=>{document.getElementById('praise-overlay').style.display='none';showerActive=false;});
+
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,err=false){const el=document.createElement('div');el.className='toast'+(err?' err':'');el.textContent=msg;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3000);}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PANEL NAVIGATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function switchPanel(name){
+  ['oshi','kensa','settings'].forEach(p=>{
+    document.getElementById('panel-'+p).classList.toggle('active',p===name);
+    const btn=document.getElementById('nav-'+p);
+    btn.classList.remove('active-oshi','active-kensa');
+    if(p===name){
+      if(p==='oshi')btn.classList.add('active-oshi');
+      else if(p==='kensa')btn.classList.add('active-kensa');
+      else btn.style.cssText='background:#555;color:#fff;border-color:#555;';
+    } else {
+      btn.style.cssText='';
+    }
+  });
+  if(name==='kensa'){kRenderDash();kApplyFilters();kRenderSched();}
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 推し事管理
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let taskList=[],archivedTasks=[],editIndex=-1;
+let praiseList=["天才！！","最高！","さすがだよ！","偉すぎる！","素晴らしい成果です！","あなたの管理能力には驚かされます","今日も完璧な仕事ぶりでしたね","着実に目標へ近づいていますよ！","素晴らしい集中力でした","いつも頼りにしています","ほんま、よう頑張ったな！","惚れ直したわ！","あんたが一番やで！","神レベルやんか！","明日もこの調子でいったろ！","あんたがおってくれて助かったー！","あんたの頑張り、ちゃんと見とるよ！","もう、大好きになっちゃうね！","かっこよかー！惚れ惚れするばい！","あんた、すごかー！"];
+let remindList=["時間だよー！","忘れてない？","今から頑張ろう！","次のタスク、進めていきましょう","集中力を高めて、一気に進めましょう","さあ、ここからが本番ですよ","次へ進む準備はいいですか？","集中して、一気に片付けましょう","期待しています。さあ、始めましょう","気合いを入れていきましょう","さあ、伝説の始まりや！","時間やで！気合い入れていくでー！","あんたの実力、見せつける時間やで！","よっしゃ！エンジン全開で行こか！","あんたがやらな誰がやるんよ！","あんたの実力、見せつける時間ばい！","あんたなら余裕やん？楽勝ばい！","あんたのスピード、見せてみんね！","今日一番の山場よ、ここから！","あんたの閃き、すごかー！楽しみ！"];
+let oshiList=[];
+let countdownTarget=null;
+let quietMode={enabled:false,start:'23:00',end:'07:00'};
+
+const addBtn=document.getElementById('add-btn');
+const todoInput=document.getElementById('todo-input');
+const dateInput=document.getElementById('date-input');
+const timeInput=document.getElementById('time-input');
+const intervalInput=document.getElementById('interval-input');
+const maxNotifyInput=document.getElementById('max-notify-input');
+const oshiSelect=document.getElementById('oshi-select');
+const mainEventInput=document.getElementById('main-event-input');
+const todoList=document.getElementById('todo-list');
+const datetimeWarn=document.getElementById('datetime-warn');
+
+function saveData(){
+  try{
+    const p=JSON.stringify({tasks:taskList,archived:archivedTasks,praises:praiseList.join(','),reminds:remindList.join(','),images:imageCollection});
+    if(new Blob([p]).size/1024>4500){alert('⚠️ データが大きすぎます');return false;}
+    localStorage.setItem('sg_v1',p);return true;
+  }catch(e){if(e.name==='QuotaExceededError')alert('💾 保存容量がいっぱいです');return false;}
+}
+
+function isQuietTime(){if(!quietMode.enabled)return false;const now=new Date(),cur=now.getHours()*60+now.getMinutes(),[sh,sm]=quietMode.start.split(':').map(Number),[eh,em]=quietMode.end.split(':').map(Number),start=sh*60+sm,end=eh*60+em;return start<=end?(cur>=start&&cur<end):(cur>=start||cur<end);}
+function toggleQuietMode(){quietMode.enabled=!quietMode.enabled;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(e){}renderQuietMode();}
+function renderQuietMode(){const btn=document.getElementById('quiet-mode-toggle');btn.textContent=quietMode.enabled?'ON':'OFF';btn.className=`quiet-toggle-btn ${quietMode.enabled?'on':'off'}`;}
+
+function setOshiColor(c){document.getElementById('oshi-color-input').value=c;}
+function saveOshiData(){try{localStorage.setItem('sg_oshi',JSON.stringify({list:oshiList}))}catch(e){}}
+function addOshi(){const ni=document.getElementById('oshi-name-input'),ci=document.getElementById('oshi-color-input'),name=ni.value.trim();if(!name){alert('名前を入力');return;}if(oshiList.length>=5){alert('最大5つまで');return;}oshiList.push({name,color:ci.value});ni.value='';saveOshiData();renderOshiList();}
+function deleteOshi(i){if(!confirm(`「${oshiList[i].name}」を削除？`))return;oshiList.splice(i,1);saveOshiData();renderOshiList();}
+function renderOshiList(){
+  const c=document.getElementById('oshi-list');
+  c.innerHTML='';
+  if(!oshiList.length){c.innerHTML='<div style="font-size:12px;color:#bbb;text-align:center;padding:6px;">カテゴリを登録してください</div>';renderOshiSelect();return;}
+  oshiList.forEach((o,i)=>{
+    const d=document.createElement('div');d.className='oshi-item';
+    d.innerHTML=`<div class="oshi-color-dot" style="background:${escH(o.color)}"></div><span class="oshi-name">${escH(o.name)}</span><button class="phrase-edit-btn" onclick="deleteOshi(${i})">削除</button>`;
+    c.appendChild(d);
+  });
+  renderOshiSelect();
+}
+function renderOshiSelect(){
+  const cur=oshiSelect.value;
+  oshiSelect.innerHTML='<option value="-1">未選択</option>';
+  oshiList.forEach((o,i)=>{const op=document.createElement('option');op.value=i;op.textContent=o.name;oshiSelect.appendChild(op);});
+  if([...oshiSelect.options].some(o=>o.value===cur))oshiSelect.value=cur;
+}
+
+function renderTasks(){
+  taskList.sort((a,b)=>((a.date||'9999')+(a.time||'23:59')).localeCompare((b.date||'9999')+(b.time||'23:59')));
+  todoList.innerHTML='';
+  taskList.forEach((t,i)=>{
+    const li=document.createElement('li');li.className='task-item';li.dataset.oshiIdx=t.oshiIdx??-1;
+    const notifyDone=t.maxNotify>0&&(t.notifyCount||0)>=t.maxNotify;
+    const intTxt={5:'5分ごと',10:'10分ごと',15:'15分ごと',30:'30分ごと',60:'1時間ごと',1440:'1日ごと'}[t.interval]||(t.interval>0?`${t.interval}分ごと`:null);
+    li.innerHTML=`<div style="flex:1"><div style="font-size:11px;color:#999">${escH(t.date||'')} ${escH(t.time||'')}</div>${intTxt?`<div style="font-size:10px;color:#aaa;margin-top:1px;">🔁 ${intTxt}${t.maxNotify>0?' / 上限'+t.maxNotify+'回':''} ${t.notifyCount>0?'('+t.notifyCount+'回済)':''}</div>`:''}<div style="font-weight:bold;">${t.isMain?'⭐ ':''}${escH(t.text)}</div>${notifyDone?'<span class="notify-done-badge">🔕 通知終了</span>':''}</div><div class="btn-group"><button class="edit-task-btn" data-i="${i}">修正</button><button class="complete-btn" data-i="${i}">完了！</button><button class="delete-task-btn" data-i="${i}">削除</button></div>`;
+    const o=t.oshiIdx!=null&&t.oshiIdx>=0&&t.oshiIdx<oshiList.length?oshiList[t.oshiIdx]:null;
+    li.style.borderLeftColor=o?o.color:'#AAAAAA';
+    todoList.appendChild(li);
+  });
+  todoList.querySelectorAll('.edit-task-btn').forEach(b=>b.addEventListener('click',()=>startEdit(+b.dataset.i)));
+  todoList.querySelectorAll('.complete-btn').forEach(b=>b.addEventListener('click',()=>completeTask(+b.dataset.i)));
+  todoList.querySelectorAll('.delete-task-btn').forEach(b=>b.addEventListener('click',()=>deleteTask(+b.dataset.i)));
+  document.title=taskList.length>0?`(${taskList.length}) 進捗管理くん`:'進捗管理くん';
+  renderCountdown();
+}
+
+function renderCountdown(){
+  const now=new Date();
+  const cands=taskList.filter(t=>t.isMain&&t.date&&t.time).map(t=>({...t,dt:new Date(`${t.date}T${t.time}`)})).filter(t=>t.dt>now).sort((a,b)=>a.dt-b.dt);
+  const area=document.getElementById('countdown-area');
+  if(!cands.length){area.style.display='none';countdownTarget=null;return;}
+  countdownTarget=cands[0];area.style.display='block';
+  const o=countdownTarget.oshiIdx!=null&&countdownTarget.oshiIdx>=0?oshiList[countdownTarget.oshiIdx]:null;
+  const bc=o?o.color:'#AAAAAA';
+  const card=document.querySelector('.countdown-card');
+  card.style.background=`linear-gradient(135deg,${bc},${bc}bb)`;
+  card.style.boxShadow=`0 5px 20px ${bc}66`;
+  const diff=countdownTarget.dt-now,days=Math.floor(diff/86400000),hours=Math.floor((diff%86400000)/3600000),mins=Math.floor((diff%3600000)/60000),secs=Math.floor((diff%60000)/1000);
+  document.getElementById('countdown-label').textContent=`🎯 ${countdownTarget.text}まで`;
+  document.getElementById('countdown-timer').textContent=days>0?`${days}日 ${hours}時間 ${mins}分 ${String(secs).padStart(2,'0')}秒`:`${hours}時間 ${mins}分 ${String(secs).padStart(2,'0')}秒`;
+  const bc2=taskList.filter(t=>!t.isMain&&t.date&&(t.time?new Date(`${t.date}T${t.time}`)<countdownTarget.dt:t.date<countdownTarget.date)).length;
+  document.getElementById('countdown-tasks').textContent=bc2>0?`📋 それまでにやること ${bc2}件`:'';
+}
+setInterval(()=>{if(countdownTarget)renderCountdown();},1000);
+
+addBtn.addEventListener('click',()=>{
+  initAudio();
+  const text=todoInput.value.trim();if(!text)return;
+  const hd=!!dateInput.value,ht=!!timeInput.value,im=mainEventInput.checked;
+  if(!hd&&ht){datetimeWarn.textContent='⚠️ 時刻を設定するには日付も必要です';datetimeWarn.style.display='block';return;}
+  if(im&&hd&&!ht){datetimeWarn.textContent='⚠️ メインイベントには日付と時刻が必要です';datetimeWarn.style.display='block';return;}
+  datetimeWarn.style.display='none';
+  if(hd&&ht&&new Date(`${dateInput.value}T${timeInput.value}`)<new Date()){if(!confirm('過去の日時です。メモとして登録しますか？'))return;}
+  const td={text,date:dateInput.value,time:timeInput.value,interval:+intervalInput.value,maxNotify:+maxNotifyInput.value,notifyCount:0,lastNotified:null,oshiIdx:+oshiSelect.value,isMain:mainEventInput.checked};
+  if(editIndex>-1){taskList[editIndex]=td;editIndex=-1;addBtn.textContent='タスクを追加';addBtn.classList.remove('edit-mode');}else{taskList.push(td);}
+  todoInput.value='';dateInput.value='';timeInput.value='';intervalInput.value='0';maxNotifyInput.value='0';oshiSelect.value='-1';mainEventInput.checked=false;
+  saveData();renderTasks();
+});
+todoInput.addEventListener('keydown',e=>{if(e.key==='Enter')addBtn.click();});
+
+function startEdit(i){const t=taskList[i];todoInput.value=t.text;dateInput.value=t.date;timeInput.value=t.time;intervalInput.value=t.interval||0;maxNotifyInput.value=t.maxNotify||0;oshiSelect.value=t.oshiIdx!=null?t.oshiIdx:'-1';mainEventInput.checked=!!t.isMain;editIndex=i;addBtn.textContent='修正を保存する';addBtn.classList.add('edit-mode');todoInput.focus();}
+function deleteTask(i){if(!confirm(`「${taskList[i]?.text}」を削除？`))return;if(editIndex===i){editIndex=-1;addBtn.textContent='タスクを追加';addBtn.classList.remove('edit-mode');}else if(editIndex>i)editIndex--;taskList.splice(i,1);saveData();renderTasks();}
+function completeTask(i){
+  const t=taskList[i];if(!t)return;
+  if(editIndex===i){editIndex=-1;addBtn.textContent='タスクを追加';addBtn.classList.remove('edit-mode');}else if(editIndex>i)editIndex--;
+  const now=new Date(),at=now.toLocaleDateString('sv-SE')+' '+now.toTimeString().slice(0,5);
+  archivedTasks.unshift({...t,completedAt:at});
+  showShowerEffect(praiseList.join(','),`「${t.text}」完了おめでとう！`);
+  taskList.splice(i,1);saveData();renderTasks();renderArchive();
+}
+function toggleArchive(){const l=document.getElementById('archive-list'),b=document.querySelector('.toggle-archive-btn');if(l.style.display==='none'){l.style.display='block';b.textContent='▲ 非表示';}else{l.style.display='none';b.textContent='▼ 表示';}}
+function clearArchive(){if(!archivedTasks.length)return;if(!confirm(`${archivedTasks.length}件を全削除？`))return;archivedTasks=[];saveData();renderArchive();}
+function renderArchive(){
+  const al=document.getElementById('archive-list'),ac=document.getElementById('archive-count');
+  ac.textContent=archivedTasks.length;al.innerHTML='';
+  if(!archivedTasks.length){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">完了済みタスクはありません</li>';return;}
+  archivedTasks.forEach((t,i)=>{
+    const li=document.createElement('li');
+    li.innerHTML=`<div style="flex:1"><div style="font-size:11px;color:#bbb">${escH(t.date||'')} ${escH(t.time||'')}</div><div style="font-weight:bold;color:#888;text-decoration:line-through;">${escH(t.text)}</div><div class="completed-at">✅ 完了: ${escH(t.completedAt||'')}</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;"><button class="restore-btn" data-i="${i}">↩ 元に戻す</button><button class="archive-delete-btn" data-i="${i}">削除</button></div>`;
+    al.appendChild(li);
+  });
+  al.querySelectorAll('.restore-btn').forEach(b=>b.addEventListener('click',()=>{const{completedAt,...r}=archivedTasks[+b.dataset.i];taskList.push(r);archivedTasks.splice(+b.dataset.i,1);saveData();renderTasks();renderArchive();}));
+  al.querySelectorAll('.archive-delete-btn').forEach(b=>b.addEventListener('click',()=>{if(!confirm('削除しますか？'))return;archivedTasks.splice(+b.dataset.i,1);saveData();renderArchive();}));
+}
+
+// 通知チェック
+setInterval(()=>{
+  if(isQuietTime())return;
+  const now=new Date(),nd=now.toLocaleDateString('sv-SE'),nt=now.toTimeString().slice(0,5),ntot=now.getHours()*60+now.getMinutes();
+  taskList.forEach(t=>{
+    if(!t.date||!t.time)return;
+    const max=t.maxNotify||0,cnt=t.notifyCount||0;
+    if(max>0&&cnt>=max)return;
+    const isInit=t.date===nd&&t.time===nt;
+    const isRep=t.interval>0&&t.lastNotified!==null&&(ntot-t.lastNotified)>=t.interval;
+    const isMis=t.interval>0&&t.lastNotified===null&&new Date(`${t.date}T${t.time}`)<now;
+    if((isInit||isRep||isMis)&&t.lastNotified!==ntot){
+      t.lastNotified=ntot;t.notifyCount=cnt+1;
+      const ph=remindList.length>0?remindList[Math.floor(Math.random()*remindList.length)]:'時間だよ！';
+      if('Notification'in window&&Notification.permission==='granted')new Notification(t.text,{body:ph,icon:'icon.png'});
+      if(!document.hidden){if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();playBeep();showShowerEffect(remindList.join(','),`時間だよ！「${t.text}」！`);}
+      saveData();
+      if(max>0&&t.notifyCount>=max)renderTasks();
+    }
+  });
+},5000);
+
+// セリフ管理
+function getList(type){return type==='praise'?praiseList:remindList;}
+function togglePhrase(type){const b=document.getElementById(`${type}-phrase-body`),btn=document.getElementById(`toggle-${type}-btn`);if(b.style.display==='none'){b.style.display='block';btn.textContent='▲ 非表示';}else{b.style.display='none';btn.textContent='▼ 表示';}}
+function addPhrase(type){const input=document.getElementById(`${type}-new-input`),text=input.value.trim();if(!text)return;if(getList(type).length>=20){alert('最大20件');return;}getList(type).push(text);input.value='';saveData();renderPhraseList(type);}
+function clearPhrases(type){const l=type==='praise'?'褒め言葉':'リマインダー';if(!getList(type).length||!confirm(`${l}を全削除？`))return;if(type==='praise')praiseList=[];else remindList=[];saveData();renderPhraseList(type);}
+function renderPhraseList(type){const ul=document.getElementById(`${type}-phrase-list`);ul.innerHTML='';getList(type).forEach((p,i)=>{const li=document.createElement('li');li.innerHTML=`<span>${escH(p)}</span><button class="phrase-edit-btn" onclick="editPhrase('${type}',${i})">編集</button><button class="phrase-delete-btn" onclick="deletePhrase('${type}',${i})">削除</button>`;ul.appendChild(li);});}
+function editPhrase(type,i){const l=getList(type),t=prompt('編集',l[i]);if(t===null)return;const s=t.trim();if(!s)return;l[i]=s;saveData();renderPhraseList(type);}
+function deletePhrase(type,i){const l=getList(type);if(!confirm(`「${l[i]}」を削除？`))return;l.splice(i,1);saveData();renderPhraseList(type);}
+
+// 背景色
+function setBgColor(color){document.body.style.backgroundColor=color;const p=document.getElementById('bg-color-input');if(p)p.value=color;document.querySelectorAll('.color-swatch[data-color]').forEach(s=>s.classList.toggle('active',s.dataset.color===color));try{localStorage.setItem('sg_bg',color)}catch(e){}}
+document.querySelectorAll('.color-swatch[data-color]').forEach(s=>s.addEventListener('click',()=>setBgColor(s.dataset.color)));
+document.getElementById('bg-color-input').addEventListener('input',e=>setBgColor(e.target.value));
+
+// 画像管理
+const fileInput=document.getElementById('file-input'),imgLoading=document.getElementById('img-loading'),cc=document.getElementById('collection-container');
+function renderCollection(){cc.innerHTML='';imageCollection.forEach((src,i)=>{const d=document.createElement('div');d.className='collection-item';const img=document.createElement('img');img.src=src;img.alt='';const sp=document.createElement('span');sp.className='delete-img';sp.textContent='×';sp.addEventListener('click',()=>deleteImage(i));d.appendChild(img);d.appendChild(sp);cc.appendChild(d);});}
+function deleteImage(i){if(!confirm('削除？'))return;imageCollection.splice(i,1);imageQueue=[];try{localStorage.setItem('sg_imgqueue',JSON.stringify(imageQueue))}catch(e){}renderCollection();saveData();}
+function resetImages(){if(!confirm('画像をすべて削除？'))return;imageCollection=[];imageQueue=[];try{localStorage.setItem('sg_imgqueue','[]')}catch(e){}saveData();renderCollection();}
+fileInput.addEventListener('change',e=>{
+  const files=Array.from(e.target.files||[]);if(!files.length)return;
+  const MAX=10;if(imageCollection.length>=MAX){alert(`最大${MAX}枚`);fileInput.value='';return;}
+  imgLoading.style.display='block';let done=0;
+  files.forEach(f=>{if(!f.type.startsWith('image/')){done++;if(done===files.length)imgLoading.style.display='none';return;}
+    const u=URL.createObjectURL(f),img=new Image();
+    img.onload=()=>{URL.revokeObjectURL(u);const cv=document.createElement('canvas');let w=img.width,h=img.height;if(w>400||h>400){const r=Math.min(400/w,400/h);w=Math.round(w*r);h=Math.round(h*r);}cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);let q=.85,d=cv.toDataURL('image/jpeg',q);while(d.length*.75/1024>200&&q>.3){q-=.1;d=cv.toDataURL('image/jpeg',q);}if(imageCollection.length<MAX)imageCollection.push(d);done++;if(done===files.length){imgLoading.style.display='none';renderCollection();saveData();}};
+    img.onerror=()=>{URL.revokeObjectURL(u);done++;if(done===files.length)imgLoading.style.display='none';};
+    img.src=u;
+  });fileInput.value='';
+});
+
+// エクスポート/インポート
+function exportData(){const p={tasks:taskList,archived:archivedTasks,praises:praiseList.join(','),reminds:remindList.join(','),images:imageCollection,bgcolor:localStorage.getItem('sg_bg')||'#f8f9fa',oshi:oshiList};const now=new Date(),pd=n=>String(n).padStart(2,'0'),stamp=`${now.getFullYear()}${pd(now.getMonth()+1)}${pd(now.getDate())}_${pd(now.getHours())}${pd(now.getMinutes())}`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`sg_backup_${stamp}.json`;a.click();}
+document.getElementById('import-file-input').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  if(!confirm('現在のデータを上書きしますか？')){e.target.value='';return;}
+  const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);imageCollection=d.images||[];if(d.oshi)oshiList=d.oshi;if(d.bgcolor)setBgColor(d.bgcolor);saveData();saveOshiData();renderCollection();renderTasks();renderArchive();renderPhraseList('praise');renderPhraseList('remind');renderOshiList();alert('読み込みました');}catch(err){alert('読み込み失敗');}e.target.value='';};r.readAsText(f);
+});
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 検査図書管理
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const KENSA_INITIAL = [{"anken":"湖南","prno":"22-084-17518","kiki":"No.1,2汚泥熱交換器","rev":"O","vendor":"クロセ","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":1},{"anken":"湖南","prno":"22-084-17518","kiki":"No.1,2汚泥熱交換器","rev":"A","vendor":"クロセ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":2},{"anken":"湖南","prno":"22-084-18600","kiki":"No.1,2脱硫装置","rev":"O","vendor":"ミウラ化学装置","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-06-18","kensa_kubun":"社内","kensa_place":"小野","kensa_inspector":"木下","kensa_result":"合格","kensa_biko":"","id":3},{"anken":"湖南","prno":"23-084-04752","kiki":"ケーキ投入ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":4},{"anken":"湖南","prno":"23-084-08860","kiki":"No.1,2スクラバー循環ポンプ","rev":"O","vendor":"酉島製作所","y_status":"ブランクフォーマット確認済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":5},{"anken":"湖南","prno":"23-084-08860","kiki":"No,1,2排水ポンプ","rev":"O","vendor":"酉島製作所","y_status":"ブランクフォーマット確認済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":6},{"anken":"湖南","prno":"23-084-08860","kiki":"No.1,2ろ過水送水ポンプ","rev":"O","vendor":"酉島製作所","y_status":"ブランクフォーマット確認済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":7},{"anken":"湖南","prno":"22-084-17560","kiki":"ガスタンク","rev":"O","vendor":"宇部興機","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025/5/14,15","kensa_kubun":"社内","kensa_place":"山口","kensa_inspector":"陳","kensa_result":"合格","kensa_biko":"","id":8},{"anken":"湖南","prno":"24-084-06129","kiki":"No.1,2炭化品養生装置（加湿器）","rev":"O","vendor":"丸井鉄工所","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-13","kensa_kubun":"社内","kensa_place":"三重","kensa_inspector":"金島","kensa_result":"合格","kensa_biko":"","id":9},{"anken":"湖南","prno":"24-084-06129","kiki":"No.1,2炭化品養生装置（加湿器）","rev":"A","vendor":"丸井鉄工所","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":10},{"anken":"湖南","prno":"24-084-06129","kiki":"No.1,2炭化品養生装置（加湿器）","rev":"B","vendor":"丸井鉄工所","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":11},{"anken":"湖南","prno":"23-084-00668","kiki":"二次燃焼炉","rev":"O","vendor":"栄製缶","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":12},{"anken":"湖南","prno":"23-084-01690","kiki":"ろ過水給水ユニット","rev":"O","vendor":"川本製作所","y_status":"ブランクフォーマット確認済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":13},{"anken":"湖南","prno":"23-084-04755","kiki":"No.1,2窒素発生装置","rev":"O","vendor":"神鋼エアーテック／アドバン理研","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-03-17","kensa_kubun":"社内","kensa_place":"京都","kensa_inspector":"竹田","kensa_result":"","kensa_biko":"","id":14},{"anken":"湖南","prno":"23-084-09767","kiki":"排ガススクラバー（排ガスベンチュリースクラバー）","rev":"O","vendor":"ニッコーテクノ","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-23","kensa_kubun":"社内","kensa_place":"埼玉","kensa_inspector":"須藤","kensa_result":"不合格（付属品再製作）","kensa_biko":"","id":15},{"anken":"湖南","prno":"23-084-00667","kiki":"乾燥空気熱交換器（ガス冷却器）","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":16},{"anken":"湖南","prno":"23-084-04462","kiki":"炭化品養生後搬送コンベヤ","rev":"O","vendor":"エステック","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-16","kensa_kubun":"社内","kensa_place":"茨城","kensa_inspector":"黒木","kensa_result":"合格","kensa_biko":"","id":17},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1,2消化槽","rev":"O","vendor":"白石鉄工","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":18},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1,2消化槽","rev":"A","vendor":"白石鉄工","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":19},{"anken":"湖南","prno":"23-084-02616","kiki":"燃焼空気熱交換器","rev":"O","vendor":"神鋼商事／熱研産業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":20},{"anken":"湖南","prno":"23-084-02616","kiki":"乾燥空気熱交換器","rev":"O","vendor":"神鋼商事／熱研産業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":21},{"anken":"湖南","prno":"23-084-02616","kiki":"白防空気熱交換器","rev":"O","vendor":"神鋼商事／熱研産業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":22},{"anken":"湖南","prno":"23-084-０5585","kiki":"ダクト","rev":"O","vendor":"フジケンエンジニアリング","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":23},{"anken":"湖南","prno":"23-084-０5585","kiki":"ダクト","rev":"A","vendor":"フジケンエンジニアリング","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":24},{"anken":"湖南","prno":"23-084-０5585","kiki":"ダクト","rev":"B","vendor":"フジケンエンジニアリング","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":25},{"anken":"湖南","prno":"23-084-10698","kiki":"排ガススクラバー","rev":"O","vendor":"松田機工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-14","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田、西江","kensa_result":"不合格","kensa_biko":"","id":26},{"anken":"湖南","prno":"23-084-06199","kiki":"No.1,2炭化品養生後冷却コンベヤ","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-09","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":27},{"anken":"湖南","prno":"23-084-06199","kiki":"No.1,2炭化品養生後冷却コンベヤ","rev":"A","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":28},{"anken":"湖南","prno":"23-084-04463","kiki":"No.1,2炭化品養生装置（No.1,2養生空気循環ファン）","rev":"O","vendor":"昭和風力機械","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-22","kensa_kubun":"社内","kensa_place":"東京","kensa_inspector":"黒木","kensa_result":"合格","kensa_biko":"","id":29},{"anken":"湖南","prno":"23-084-04463","kiki":"No.1,2炭化品養生装置（No.1,2養生空気循環ファン）","rev":"A","vendor":"昭和風力機械","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":30},{"anken":"湖南","prno":"23-084-04463","kiki":"誘引ファン","rev":"O","vendor":"昭和風力機械","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-20","kensa_kubun":"社内","kensa_place":"東京","kensa_inspector":"黒木","kensa_result":"保留→合格","kensa_biko":"","id":31},{"anken":"湖南","prno":"23-084-06335","kiki":"ケーキ定量フィーダ","rev":"O","vendor":"シーアンドシー","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":32},{"anken":"湖南","prno":"23-084-06335","kiki":"ケーキ定量フィーダ","rev":"A","vendor":"シーアンドシー","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":33},{"anken":"湖南","prno":"22-084-24523","kiki":"炭化炉","rev":"O","vendor":"ソルテック工業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-08-18","kensa_kubun":"社内","kensa_place":"尼崎","kensa_inspector":"金島","kensa_result":"合格","kensa_biko":"","id":34},{"anken":"湖南","prno":"22-084-24523","kiki":"炭化炉","rev":"A","vendor":"ソルテック工業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":35},{"anken":"湖南","prno":"22-084-24523","kiki":"炭化炉","rev":"B","vendor":"ソルテック工業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":36},{"anken":"湖南","prno":"23-084-04462","kiki":"炭化品養生前搬送コンベヤ","rev":"O","vendor":"エステック","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-06-17","kensa_kubun":"社内","kensa_place":"茨城","kensa_inspector":"黒木","kensa_result":"合格","kensa_biko":"","id":37},{"anken":"湖南","prno":"23-084-04463","kiki":"白防空気ファン","rev":"O","vendor":"昭和風力機械","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":38},{"anken":"湖南","prno":"23-084-04463","kiki":"燃焼空気ファン","rev":"O","vendor":"昭和風力機械","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":39},{"anken":"湖南","prno":"24-084-04118","kiki":"乾燥空気熱交換器 （乾燥空気熱交換器入口排ガス調整ダンパ） （ガス冷却器入口排ガス調整ダンパ）","rev":"O","vendor":"日鋼工業／キッツエスジーエス","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-06-18","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"星野、村山","kensa_result":"合格","kensa_biko":"","id":40},{"anken":"湖南","prno":"23-084-14573","kiki":"ケーキ定量フィーダ（出口スライドゲート） 炭化品ホッパ（出口スライドゲート）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-06-17","kensa_kubun":"社内","kensa_place":"愛知","kensa_inspector":"星野","kensa_result":"合格","kensa_biko":"","id":41},{"anken":"湖南","prno":"23-084-06199","kiki":"炭化品養生前冷却コンベヤ","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-06-27","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":42},{"anken":"湖南","prno":"23-084-06199","kiki":"炭化品養生前冷却コンベヤ","rev":"A","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":43},{"anken":"湖南","prno":"23-084-06199","kiki":"炭化品養生前加湿コンベヤ","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-06-27","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":44},{"anken":"湖南","prno":"23-084-06199","kiki":"炭化品養生前加湿コンベヤ","rev":"A","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":45},{"anken":"湖南","prno":"23-084-04611","kiki":"炭化品ホッパ（炭化品ホッパ排出コンベヤ）","rev":"O","vendor":"アクト","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":46},{"anken":"湖南","prno":"23-084-04611","kiki":"炭化品振分コンベヤ","rev":"O","vendor":"アクト","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":47},{"anken":"湖南","prno":"23-084-03085","kiki":"Digester Mixer","rev":"O","vendor":"INDUTEC","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":48},{"anken":"湖南","prno":"23-084-03085","kiki":"Digester Mixer","rev":"A","vendor":"INDUTEC","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":49},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化炉（出口二重ダンパ） 炭化品養生前冷却コンベヤ(出口二重ダンパ) No.1,2炭化品養生装置(出口二重ダンパ)","rev":"O","vendor":"リックス／興永機工","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":50},{"anken":"湖南","prno":"23-084-03425","kiki":"No.1,2炭化品養生装置","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":51},{"anken":"湖南","prno":"23-084-03425","kiki":"No.1,2炭化品養生装置","rev":"A","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":52},{"anken":"湖南","prno":"23-084-03429","kiki":"炭化品ホッパ","rev":"O","vendor":"フジケンエンジニアリング","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":53},{"anken":"湖南","prno":"23-084-05579","kiki":"排ガススクラバー（水銀吸着塔）","rev":"O","vendor":"大日化工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-07-08","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":54},{"anken":"湖南","prno":"22-084-24028","kiki":"炭化炉（入口ロータリーバルブ） 炭化品ホッパ（排出ロータリーバルブ）","rev":"O","vendor":"中和機械／ニッパウエンジニアリング","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-10","kensa_kubun":"社内","kensa_place":"新潟","kensa_inspector":"星野","kensa_result":"合格","kensa_biko":"","id":55},{"anken":"湖南","prno":"23-084-12828","kiki":"乾燥空気熱交換器（ガス冷却器耐火物）","rev":"O","vendor":"ビーアイテック","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-07-23","kensa_kubun":"社内","kensa_place":"千葉","kensa_inspector":"石田","kensa_result":"合格","kensa_biko":"","id":56},{"anken":"湖南","prno":"22-084-17516","kiki":"余剰ガス燃焼装置","rev":"A","vendor":"神鋼商事／米花工業","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-07-17","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":57},{"anken":"湖南","prno":"22-084-23102","kiki":"特殊電源設備（消化施設）","rev":"O","vendor":"日立製作所／GSユアサ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-09-04","kensa_kubun":"社内","kensa_place":"京都","kensa_inspector":"高木","kensa_result":"合格","kensa_biko":"","id":58},{"anken":"湖南","prno":"23-084-03029","kiki":"No.1,2消化槽（テレスコープ弁）","rev":"O","vendor":"久門製作所／昭和バルブ製作所","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-09-30","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"西村","kensa_result":"合格","kensa_biko":"","id":59},{"anken":"湖南","prno":"23-084-04727","kiki":"活性炭添加装置","rev":"O","vendor":"神鋼商事／グローバルマテリアルズエンジニアリング","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-11-17","kensa_kubun":"社内","kensa_place":"福岡","kensa_inspector":"陳","kensa_result":"不合格（外観不一致、付属品欠品）→合格","kensa_biko":"","id":60},{"anken":"湖南","prno":"23-084-03430","kiki":"乾燥汚泥供給ホッパ","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-09","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"保留（カバー干渉、RT必要）→合格","kensa_biko":"","id":61},{"anken":"湖南","prno":"23-084-04667","kiki":"乾燥汚泥空気移送装置","rev":"O","vendor":"三興商事／アマノ","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-17","kensa_kubun":"社内","kensa_place":"静岡","kensa_inspector":"須藤","kensa_result":"不合格（図面相違）","kensa_biko":"","id":62},{"anken":"湖南","prno":"22-084-17517","kiki":"脱臭ファン","rev":"O","vendor":"大日化工／協和化工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-17","kensa_kubun":"社内","kensa_place":"埼玉","kensa_inspector":"遠山","kensa_result":"合格","kensa_biko":"","id":63},{"anken":"湖南","prno":"23-084-03430","kiki":"乾燥汚泥貯留ホッパ","rev":"O","vendor":"光南溶工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-24","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":64},{"anken":"湖南","prno":"22-084-17517","kiki":"脱臭装置","rev":"O","vendor":"大日化工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-28","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":65},{"anken":"湖南","prno":"22-084-17517","kiki":"脱臭ファン（ミストセパレータ）","rev":"O","vendor":"大日化工","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-28","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":66},{"anken":"湖南","prno":"23-084-04720","kiki":"二次燃焼炉補助燃料装置制御盤","rev":"O","vendor":"ボルカノ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-11-20","kensa_kubun":"社内","kensa_place":"三田市","kensa_inspector":"高木","kensa_result":"合格","kensa_biko":"","id":67},{"anken":"湖南","prno":"23-084-04720","kiki":"二次燃焼炉補助燃料装置","rev":"O","vendor":"ボルカノ","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-11-20","kensa_kubun":"社内","kensa_place":"三田市","kensa_inspector":"西村","kensa_result":"合格","kensa_biko":"","id":68},{"anken":"湖南","prno":"25-084-09819","kiki":"乾燥汚泥貯留ホッパ（集塵装置） No.1,2炭化品養生装置（集塵装置）","rev":"O","vendor":"山田工業","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2026-02-09","kensa_kubun":"社内","kensa_place":"富山","kensa_inspector":"竹田","kensa_result":"保留→合格","kensa_biko":"","id":69},{"anken":"湖南","prno":"23-084-00613","kiki":"炭化炉（直流電源装置）","rev":"O","vendor":"三社電機製作所","y_status":"発行済","y_biko":"","s_status":"2025-02-27","s_biko":"","kensa_date":"2026-03-17","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"高木","kensa_result":"合格","kensa_biko":"","id":70},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.2ケーキ中継ポンプ用滑剤注入装置","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-08","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"","kensa_biko":"","id":71},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.3ケーキ中継ポンプ用滑剤注入装置","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-08","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"","kensa_biko":"","id":72},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.2-1ケーキ中継ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-09","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"","kensa_biko":"","id":73},{"anken":"湖南その18","prno":"24-084-15637","kiki":"No.2,3ケーキ中継ポンプ用ホッパ","rev":"O","vendor":"シーアンドシー","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":74},{"anken":"湖南その18","prno":"24-084-15637","kiki":"No.2,3ケーキ中継ポンプ用ホッパ","rev":"A","vendor":"シーアンドシー","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":75},{"anken":"湖南その18","prno":"24-084-08367","kiki":"脱水汚泥用ボール弁","rev":"O","vendor":"キッツ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-11-11","kensa_kubun":"社内","kensa_place":"長野","kensa_inspector":"須藤","kensa_result":"保留（取付板図面修正中）→","kensa_biko":"","id":76},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.3-1,2ケーキ中継ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-16","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"池田","kensa_result":"不合格（図面相違）","kensa_biko":"","id":77},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.3-1,2ケーキ中継ポンプ","rev":"A","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":78},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.3-1,2ケーキ中継ポンプ","rev":"B","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":79},{"anken":"湖南その18","prno":"24-084-09922","kiki":"No.3ケーキ返送コンベヤ","rev":"O","vendor":"アクト","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":80},{"anken":"湖南その18","prno":"24-084-09922","kiki":"No.4ケーキ返送コンベヤ","rev":"O","vendor":"アクト","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":81},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.2-2ケーキ中継ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2026-01-09","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":82},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-1、3-4汚泥脱水機","rev":"O","vendor":"クボタ／広島メタル&マシナリー","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":83},{"anken":"湖南その19","prno":"24-084-05912","kiki":"No.3-4ケーキ圧送ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-07","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"","kensa_biko":"","id":84},{"anken":"湖南その19","prno":"24-084-05912","kiki":"No.3-4ケーキ圧送ポンプ用滑剤注入装置","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-07","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"","kensa_biko":"","id":85},{"anken":"湖南その19","prno":"24-084-05912","kiki":"No.3-1ケーキ圧送ポンプ用滑剤注入装置","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-07","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"","kensa_biko":"","id":86},{"anken":"湖南その19","prno":"24-084-05912","kiki":"No.3-1ケーキ圧送ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-04-16","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口、西江","kensa_result":"合格","kensa_biko":"","id":87},{"anken":"湖南その19","prno":"24-084-07461","kiki":"No.1、4濃縮汚泥供給ポンプ No.1、4薬品供給ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-15","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"池田","kensa_result":"合格","kensa_biko":"","id":88},{"anken":"湖南その19","prno":"24-084-09039","kiki":"無機凝集剤貯留タンク","rev":"O","vendor":"エーゼーゴム洋行","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-10-24","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":89},{"anken":"湖南その19","prno":"24-084-09039","kiki":"無機凝集剤貯留タンク","rev":"A","vendor":"エーゼーゴム洋行","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":90},{"anken":"湖南その19","prno":"24-084-03760","kiki":"3-1、3-4遠心脱水機（制御盤）","rev":"O","vendor":"クボタ／共栄電器工業","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":91},{"anken":"南蒲生","prno":"23-084-03848","kiki":"インバータ盤","rev":"O","vendor":"クシダ工業","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":92},{"anken":"兵庫東","prno":"21-084-24830","kiki":"監視制御装置（ハード）","rev":"O","vendor":"アイベステクノ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":93},{"anken":"酒匂川","prno":"24-084-03048","kiki":"No.1/No.2ケーキ投入ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"発行済","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":94},{"anken":"浄水セット","prno":"25-084-06660","kiki":"浄水セット、逆浸透型　制御盤","rev":"O","vendor":"金陵製作所","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":95},{"anken":"上ヶ原","prno":"21-084-21587","kiki":"粒状活性炭接触池動力制御盤ほか","rev":"O","vendor":"アイベステクノ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":96},{"anken":"上ヶ原","prno":"21-084-21587","kiki":"凝集沈殿池設備","rev":"O","vendor":"アイベステクノ","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":97},{"anken":"加古川上流","prno":"25-084-02295","kiki":"スクリーンかす洗浄脱水機用現場動力制御盤","rev":"O","vendor":"八洲制御システム","y_status":"発行済","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":98},{"anken":"下関奥山","prno":"25-08G-04099","kiki":"給じん装置油圧ユニット制御盤","rev":"O","vendor":"西日本テクノ","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":99},{"anken":"福井","prno":"23-08G-00053","kiki":"インバータ制御盤","rev":"O","vendor":"中山技術コンサルタント","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":100},{"anken":"南蒲生","prno":"23-084-03945","kiki":"受配電盤（TM-11）高圧受電盤（1系）","rev":"O","vendor":"クシダ工業","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":101},{"anken":"福井","prno":"22-08G-14942","kiki":"助燃バーナ制御盤、二次燃焼室用再燃バーナ制御盤、 ボイラ用再燃バーナ制御盤","rev":"O","vendor":"九州オリンピア工業","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":102},{"anken":"須恵","prno":"24-08G-04004","kiki":"蒸気タービン発電機","rev":"O","vendor":"西芝電機","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":103},{"anken":"福井","prno":"22-08G-07284","kiki":"蒸気タービン起動盤","rev":"O","vendor":"新日本造機","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":104},{"anken":"福井","prno":"22-08G-24146","kiki":"高圧配電設備／低圧配電設備","rev":"O","vendor":"バンテック","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":105},{"anken":"さしま","prno":"25-08G-13849","kiki":"煙道中水銀濃度計","rev":"O","vendor":"京都電子工業","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":106},{"anken":"さしま","prno":"25-08G-14208","kiki":"ボイラ上部酸素濃度計","rev":"O","vendor":"中外テクノス","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":107},{"anken":"さしま","prno":"25-08G-12794","kiki":"計装制御装置","rev":"O","vendor":"西川計測","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":108},{"anken":"兵庫東","prno":"21-084-24830","kiki":"監視制御装置（ソフト）","rev":"O","vendor":"アイベステクノ","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":109},{"anken":"須恵","prno":"24-08G-04716","kiki":"ディーゼル発電機","rev":"O","vendor":"オオツカデイゼル","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":110},{"anken":"須恵","prno":"24-08G-04716","kiki":"ディーゼル発電設備","rev":"O","vendor":"寺崎電気産業","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":111},{"anken":"下関奥山","prno":"25-08G-04099","kiki":"建築動力盤","rev":"O","vendor":"西日本テクノ","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":112},{"anken":"下関奥山","prno":"25-08G-04099","kiki":"インバータ盤","rev":"O","vendor":"西日本テクノ","y_status":"発行予定","y_biko":"","s_status":"","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":113},{"anken":"湖南その18","prno":"","kiki":"No.2ケーキ返送コンベヤ（既設改造）","rev":"O","vendor":"間機設","y_status":"発行予定","y_biko":"","s_status":"2026/5上旬","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":114},{"anken":"湖南","prno":"23-084-00609","kiki":"炭化炉（動力制御盤）","rev":"O","vendor":"アイベステクノ","y_status":"発行予定","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"未定","kensa_kubun":"社内","kensa_place":"姫路","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":115},{"anken":"湖南","prno":"23-084-00609","kiki":"炭化炉（絶縁抵抗監視装置）","rev":"O","vendor":"アイベステクノ","y_status":"発行予定","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"未定","kensa_kubun":"社内","kensa_place":"姫路","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":116},{"anken":"湖南","prno":"23-084-00609","kiki":"No.1,2炭化品養生装置（現場動力制御盤）","rev":"O","vendor":"アイベステクノ","y_status":"発行予定","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"未定","kensa_kubun":"社内","kensa_place":"姫路","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":117},{"anken":"湖南","prno":"23-084-00609","kiki":"苛性ソーダ貯留槽（受入警報盤）","rev":"O","vendor":"アイベステクノ","y_status":"発行予定","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"未定","kensa_kubun":"社内","kensa_place":"姫路","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":118},{"anken":"湖南","prno":"23-084-00609","kiki":"No.1,2ろ過水送水ポンプ（現場操作盤）","rev":"O","vendor":"アイベステクノ","y_status":"発行予定","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"未定","kensa_kubun":"社内","kensa_place":"姫路","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":119},{"anken":"湖南","prno":"23-084-08860","kiki":"No.1,2スクラバー循環ポンプ　アンカーボルト","rev":"O","vendor":"酉島製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":120},{"anken":"湖南","prno":"23-084-08860","kiki":"No.1,2ろ過水送水ポンプ　アンカーボルト","rev":"O","vendor":"酉島製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":121},{"anken":"湖南","prno":"23-084-08860","kiki":"No.1,2排水ポンプ　アンカーボルト","rev":"O","vendor":"酉島製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":122},{"anken":"湖南","prno":"23-084-00668","kiki":"二次燃焼炉　テンプレート、アンカーボルト","rev":"O","vendor":"栄製缶","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":123},{"anken":"湖南","prno":"22-084-18600","kiki":"No.1,2脱硫装置　アンカーボルト","rev":"O","vendor":"ミウラ化学装置","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":124},{"anken":"湖南","prno":"23-084-04612","kiki":"消化ガス昇圧ブロワ　アンカーボルト","rev":"O","vendor":"アンレット","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":125},{"anken":"湖南","prno":"23-084-04463","kiki":"No.1,2炭化品養生装置 （No.1,2養生空気循環ファン　アンカーボルト）","rev":"O","vendor":"昭和風力機械","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":126},{"anken":"湖南","prno":"23-084-04463","kiki":"誘引ファン　アンカーボルト","rev":"O","vendor":"昭和風力機械","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":127},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1,2消化槽（避雷針）","rev":"O","vendor":"白石鉄工／大阪避雷針工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":128},{"anken":"湖南","prno":"22-084-17516","kiki":"余剰ガス燃焼装置　アンカーテンプレート、アンカーボルト","rev":"O","vendor":"神鋼商事／米花工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":129},{"anken":"湖南","prno":"23-084-04671","kiki":"苛性ソーダ貯留槽　アンカーボルト","rev":"O","vendor":"日伸物産／ＴＩＰ　ｃｏｍｐｏｓｉｔｅ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":130},{"anken":"湖南","prno":"23-084-22608","kiki":"排ガススクラバー（排水タンク　アンカーボルト）","rev":"O","vendor":"日伸物産／ＴＩＰ　ｃｏｍｐｏｓｉｔｅ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":131},{"anken":"湖南","prno":"23-084-05315","kiki":"No.1,2温水循環ポンプ（膨張タンク（密閉式））","rev":"O","vendor":"森松工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":132},{"anken":"湖南","prno":"23-084-10698","kiki":"排ガススクラバー　アンカーフレーム、ゲージプレート","rev":"O","vendor":"松田機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":133},{"anken":"湖南","prno":"22-084-17560","kiki":"ガスタンク　アンカーボルト","rev":"O","vendor":"宇部興機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":134},{"anken":"湖南","prno":"22-084-17560","kiki":"ガスタンク（接地極）","rev":"O","vendor":"宇部興機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":135},{"anken":"湖南","prno":"23-084-04755","kiki":"No.1,2窒素貯留槽","rev":"O","vendor":"神鋼エアーテック／アドバン理研","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":136},{"anken":"湖南","prno":"23-084-04462","kiki":"炭化品養生後搬送コンベヤ　アンカーボルト","rev":"O","vendor":"エステック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":137},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（底板、アニュラプレート、側板1～3段目）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":138},{"anken":"湖南","prno":"23-084-07040","kiki":"炭化炉（エアシャワー室　アンカーボルト）","rev":"O","vendor":"岡野商事／愛豊工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":139},{"anken":"湖南","prno":"24-084-06129","kiki":"No.1,2炭化品養生装置(加湿装置） （加湿器　アンカーボルト)","rev":"O","vendor":"丸井鉄工所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":140},{"anken":"湖南","prno":"23-084-04445","kiki":"空気槽　アンカーボルト","rev":"O","vendor":"三興商事／サンテック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":141},{"anken":"湖南","prno":"23-084-05314","kiki":"廃熱回収熱交換器(アンカーボルト)","rev":"O","vendor":"日阪製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":142},{"anken":"湖南","prno":"23-084-04657","kiki":"地下床排水ポンプ","rev":"O","vendor":"新明和工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":143},{"anken":"湖南","prno":"23-084-04657","kiki":"床排水ポンプ","rev":"O","vendor":"新明和工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":144},{"anken":"湖南","prno":"23-084-04657","kiki":"No.1,2床排水ポンプ","rev":"O","vendor":"新明和工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":145},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（底板、アニュラプレート）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":146},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（側板1～3段目）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":147},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（側板4～5段目）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":148},{"anken":"湖南","prno":"23-084-03313","kiki":"消化ガス昇圧ブロワ","rev":"O","vendor":"八紘商事／日新技研","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":149},{"anken":"湖南","prno":"23-084-05314","kiki":"廃熱回収熱交換器","rev":"O","vendor":"日阪製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":150},{"anken":"湖南","prno":"23-084-04612","kiki":"消化ガス昇圧ブロワ","rev":"O","vendor":"アンレット","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":151},{"anken":"湖南","prno":"23-084-00668","kiki":"二次燃焼炉（下段）","rev":"O","vendor":"栄製缶","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-05-15","kensa_kubun":"社内","kensa_place":"岐阜","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":152},{"anken":"湖南","prno":"23-084-04445","kiki":"空気槽","rev":"O","vendor":"三興商事／サンテック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":153},{"anken":"湖南","prno":"23-084-22608","kiki":"排ガススクラバー（排水タンク）","rev":"O","vendor":"日伸物産／ＴＩＰ　ｃｏｍｐｏｓｉｔｅ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":154},{"anken":"湖南","prno":"23-084-０5585","kiki":"ダクト（高温排ガスダクト　二次燃焼炉～白防空気熱交換器）","rev":"O","vendor":"フジケンエンジニアリング","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":155},{"anken":"湖南","prno":"23-084-06304","kiki":"No.1,2計装用空気圧縮機","rev":"O","vendor":"常盤電機／日立産機システム","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":156},{"anken":"湖南","prno":"23-084-06304","kiki":"除湿器","rev":"O","vendor":"常盤電機／日立産機システム","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":157},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（側板4～5段目、トップアングル、補強リング）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":158},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（側板6～7段目、トップアングル、補強リング）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":159},{"anken":"湖南","prno":"23-084-04671","kiki":"苛性ソーダ貯留槽","rev":"O","vendor":"日伸物産／ＴＩＰ　ｃｏｍｐｏｓｉｔｅ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":160},{"anken":"湖南","prno":"23-084-07040","kiki":"炭化炉（エアシャワー室）","rev":"O","vendor":"岡野商事／愛豊工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":161},{"anken":"湖南","prno":"23-084-01690","kiki":"ろ過水給水ユニット　アンカーボルト","rev":"O","vendor":"川本製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":162},{"anken":"湖南","prno":"23-084-00668","kiki":"二次燃焼炉（中段）","rev":"O","vendor":"栄製缶","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-06-20","kensa_kubun":"社内","kensa_place":"岐阜","kensa_inspector":"竹田、西江","kensa_result":"合格","kensa_biko":"","id":163},{"anken":"湖南","prno":"23-084-07039","kiki":"重量計　第1回","rev":"O","vendor":"JFEアドバンテック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":164},{"anken":"湖南","prno":"23-084-14573","kiki":"ケーキ定量フィーダ（出口スライドゲート）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":165},{"anken":"湖南","prno":"23-084-14573","kiki":"炭化品ホッパ（出口スライドゲート）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":166},{"anken":"湖南","prno":"24-084-08365","kiki":"燃焼空気熱交換器（スプレーノズル）","rev":"O","vendor":"いけうち","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":167},{"anken":"湖南","prno":"23-084-04674","kiki":"No.1,2炭化品養生装置（排出装置）","rev":"O","vendor":"椿本興業／ヨシカワ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":168},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（側板6～7段目、ラフター）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":169},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（ラフター）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":170},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化品養生前冷却コンベヤ(出口二重ダンパ)","rev":"O","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":171},{"anken":"湖南","prno":"22-084-22970","kiki":"No.1,2炭化品養生装置(出口二重ダンパ)","rev":"O","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":172},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（屋根板、センターリング、撹拌機用座）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":173},{"anken":"湖南","prno":"23-084-10698","kiki":"排ガススクラバー（pH計ユニット）","rev":"O","vendor":"松田機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":174},{"anken":"湖南","prno":"22-084-24028","kiki":"炭化炉（入口ロータリーバルブ）","rev":"O","vendor":"中和機械／ニッパウエンジニアリング","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":175},{"anken":"湖南","prno":"22-084-24028","kiki":"炭化品ホッパ（排出ロータリーバルブ）","rev":"O","vendor":"中和機械／ニッパウエンジニアリング","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":176},{"anken":"湖南","prno":"23-084-04445","kiki":"No.1,2,3空気圧縮機","rev":"O","vendor":"三興商事／三井精機工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":177},{"anken":"湖南","prno":"22-084-22388","kiki":"No.1,2汚泥熱交換器（No.1,2温水切替弁）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":178},{"anken":"湖南","prno":"23-084-05311","kiki":"No.1,2計装用空気圧縮機（圧力スイッチ）","rev":"O","vendor":"メルテック／長野計器","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":179},{"anken":"湖南","prno":"23-084-24730","kiki":"No.1,2炭化品養生装置（加湿装置）","rev":"O","vendor":"いけうち","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":180},{"anken":"湖南","prno":"23-084-04853","kiki":"No.1,2脱硫装置（脱硫剤吊上装置）","rev":"O","vendor":"東洋ホイスト","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":181},{"anken":"湖南","prno":"22-084-20723","kiki":"No.1,2消化槽（給水用電磁弁）","rev":"O","vendor":"新光電機／CKD","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":182},{"anken":"湖南","prno":"22-084-22387","kiki":"No.1,2消化槽（安全弁）","rev":"O","vendor":"新倉工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":183},{"anken":"湖南","prno":"22-084-20421","kiki":"No.1,2消化槽（のぞき窓）","rev":"O","vendor":"久門製作所／日本計器","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":184},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（ノズル、越流ポット、シールポット）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":185},{"anken":"湖南","prno":"23-084-10507","kiki":"温度計（測温抵抗体）","rev":"O","vendor":"メルテック／山里産業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":186},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化炉（出口二重ダンパ）","rev":"O","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":187},{"anken":"湖南","prno":"23-084-17005","kiki":"オリフィス式流量計（4台）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":188},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（手摺、踊場、階段等）その1","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":189},{"anken":"湖南","prno":"23-084-02616","kiki":"乾燥空気熱交換器(No.3)","rev":"O","vendor":"神鋼商事／熱研産業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-07-24","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"保留→合格","kensa_biko":"","id":190},{"anken":"湖南","prno":"23-084-10523","kiki":"電磁流量計（消化施設）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":191},{"anken":"湖南","prno":"24-084-06536","kiki":"電磁流量計（燃料化施設）第1回","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":192},{"anken":"湖南","prno":"23-084-15453","kiki":"乾燥空気熱交換器（ガス冷却器スプレーノズル）","rev":"O","vendor":"いけうち","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":193},{"anken":"湖南","prno":"22-084-22763","kiki":"炭化炉（炭化炉冷却ファン）","rev":"O","vendor":"竹本／SDG","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":194},{"anken":"湖南","prno":"23-084-15453","kiki":"乾燥空気熱交換器（ガス冷却器） （水噴霧コントロールユニット、 増圧ポンプユニット、ノズル接続配管）","rev":"O","vendor":"いけうち","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":195},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（屋根板、センターリング、撹拌機用座）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":196},{"anken":"湖南","prno":"22-084-18786","kiki":"No.2消化槽（手摺、踊場、階段等）その2","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":197},{"anken":"湖南","prno":"24-084-03490","kiki":"炭化品ホッパ（脱臭装置）","rev":"O","vendor":"永光","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":198},{"anken":"湖南","prno":"22-084-20205","kiki":"No.1,2濃縮汚泥投入切替弁","rev":"O","vendor":"久門製作所／昭和バルブ製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":199},{"anken":"湖南","prno":"22-084-20205","kiki":"No.1,2消化汚泥引抜弁","rev":"O","vendor":"久門製作所／昭和バルブ製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":200},{"anken":"湖南","prno":"22-084-20205","kiki":"No.1,2消化汚泥強制引抜弁","rev":"O","vendor":"久門製作所／昭和バルブ製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":201},{"anken":"湖南","prno":"22-084-20205","kiki":"No.1,2消化汚泥弁","rev":"O","vendor":"久門製作所／昭和バルブ製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":202},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（ノズル、越流ポット、シールポット）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":203},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1消化槽（手摺、踊場、階段等）","rev":"O","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":204},{"anken":"湖南","prno":"23-084-10506","kiki":"レベルスイッチ","rev":"O","vendor":"関西オートメイション","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":205},{"anken":"湖南","prno":"23-084-03253","kiki":"No.1,2温水ヒータ","rev":"O","vendor":"巴商会","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":206},{"anken":"湖南","prno":"22-084-23102","kiki":"直流電源装置","rev":"O","vendor":"日立製作所／GSユアサ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":207},{"anken":"湖南","prno":"23-084-10511","kiki":"No.1,2消化槽（液位計（差圧式））","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":208},{"anken":"湖南","prno":"23-084-10511","kiki":"No.1,2消化槽（消化ガス圧力計（圧力伝送器））","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":209},{"anken":"湖南","prno":"23-084-02622","kiki":"No.1,2温水循環ポンプ","rev":"O","vendor":"大岩マシナリー／荏原製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":210},{"anken":"湖南","prno":"23-084-04838","kiki":"炭化炉（メンテナンス用ホイスト）","rev":"O","vendor":"俊機／象印チェンブロック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":211},{"anken":"湖南","prno":"23-084-04838","kiki":"脱臭装置（ホイスト）","rev":"O","vendor":"俊機／象印チェンブロック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":212},{"anken":"湖南","prno":"23-084-04838","kiki":"活性炭添加装置（活性炭投入ホイスト）","rev":"O","vendor":"俊機／象印チェンブロック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":213},{"anken":"湖南","prno":"23-084-14573","kiki":"乾燥汚泥貯留ホッパ（排出ゲート）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":214},{"anken":"湖南","prno":"23-084-14573","kiki":"No.1,2炭化品養生装置 （スライドゲート（入口・出口））","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":215},{"anken":"湖南","prno":"23-084-14573","kiki":"炭化炉（入口スライドゲート）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":216},{"anken":"湖南","prno":"23-084-22214","kiki":"乾燥汚泥空気移送装置（移送空気用冷却器）","rev":"O","vendor":"神鋼商事／オリオン熱学","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":217},{"anken":"湖南","prno":"23-084-14773","kiki":"ケーキ投入ポンプ（脱水汚泥流量計）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":218},{"anken":"湖南","prno":"23-084-19745","kiki":"乾燥汚泥貯留ホッパ（臭気遮断ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":219},{"anken":"湖南","prno":"23-084-19745","kiki":"No.1,2炭化品養生装置（排気調節ダンパ） No.1,2炭化品養生装置（下段加湿空気流量調節弁） No.1,2炭化品養生装置（外気調整ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":220},{"anken":"湖南","prno":"23-084-04668","kiki":"冷却装置","rev":"O","vendor":"関西日立／日立グローバルライフソリューションズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":221},{"anken":"湖南","prno":"23-084-04603","kiki":"No.1,2苛性ソーダ供給ポンプ","rev":"O","vendor":"日機装エイコー","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":222},{"anken":"湖南","prno":"24-084-00846","kiki":"炭化炉（炭化炉出口二重ダンパ用窒素ヒータ）","rev":"O","vendor":"八光電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":223},{"anken":"湖南","prno":"23-084-13949","kiki":"ケーキ投入ポンプ（吐出弁、投入弁、戻り弁）","rev":"O","vendor":"竹本／日本ダイヤバルブ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":224},{"anken":"湖南","prno":"23-084-09151","kiki":"苛性ソーダ貯留槽（ヒータ､温度計）","rev":"O","vendor":"東京興業貿易商会","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":225},{"anken":"湖南","prno":"23-084-07039","kiki":"重量計　第2回","rev":"O","vendor":"JFEアドバンテック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":226},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化品ホッパ（バグフィルタ出口二重ダンパ、除塵装置出口二重ダンパ）","rev":"O","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":227},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化品振分コンベヤ（No.1,2炭化品養生装置入口二重ダンパ）","rev":"O","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":228},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化品養生後搬送コンベヤ（炭化品ホッパ入口二重ダンパ）","rev":"O","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":229},{"anken":"湖南","prno":"23-084-04675","kiki":"乾燥汚泥貯留ホッパ（下部排出装置）","rev":"O","vendor":"椿本興業／ヨシカワ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":230},{"anken":"湖南","prno":"23-084-20179","kiki":"脱臭ファン（自動ダンパ）","rev":"O","vendor":"新旭","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":231},{"anken":"湖南","prno":"23-084-05296","kiki":"No.2消化槽撹拌機","rev":"O","vendor":"白石鉄工／リョーワ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":232},{"anken":"湖南","prno":"25-084-09454","kiki":"乾燥汚泥供給ホッパ（自動ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":233},{"anken":"湖南","prno":"25-084-09454","kiki":"乾燥汚泥貯留ホッパ（自動ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":234},{"anken":"湖南","prno":"23-084-19745","kiki":"二次燃焼炉（入口燃焼空気調節ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":235},{"anken":"湖南","prno":"23-084-19745","kiki":"白防空気熱交換器（出口高温白防空気調節ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":236},{"anken":"湖南","prno":"23-084-19745","kiki":"乾燥空気熱交換器（入口循環排ガス調整ダンパ1） 乾燥空気熱交換器（入口循環排ガス調整ダンパ2） 乾燥空気熱交換器（低温排ガス調整ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":237},{"anken":"湖南","prno":"23-084-19745","kiki":"燃焼空気ファン（外気切替ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":238},{"anken":"湖南","prno":"23-084-19745","kiki":"水銀吸着塔（入口排ガス遮断ダンパ） 水銀吸着塔（出口排ガス遮断ダンパ） 水銀吸着塔（バイパス排ガス遮断ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":239},{"anken":"湖南","prno":"23-084-19745 25-084-09454","kiki":"No.1,2炭化品養生装置（中段加湿空気流量調節弁） No.1,2炭化品養生装置（循環空気流量調整ダンパ） No.1,2炭化品養生装置（バイパス空気遮断ダンパ） No.1,2炭化品養生装置（大気放出ダンパ） No.1,2炭化品養生装置（低温外気調整ダンパ）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":240},{"anken":"湖南","prno":"23-084-04604","kiki":"炭化品ホッパ（除塵装置）","rev":"O","vendor":"アマノ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":241},{"anken":"湖南","prno":"23-084-10698","kiki":"排気筒","rev":"O","vendor":"松田機工","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":242},{"anken":"湖南","prno":"23-084-04720","kiki":"二次燃焼炉補助燃料装置（二次燃焼炉燃焼用バーナ制御盤）","rev":"O","vendor":"ボルカノ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":243},{"anken":"湖南","prno":"24-084-06536","kiki":"電磁流量計（燃料化施設）第2回","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":244},{"anken":"湖南","prno":"24-084-21525","kiki":"現場ゲージ　第1回","rev":"O","vendor":"メルテック／長野計器","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":245},{"anken":"湖南","prno":"24-084-22986","kiki":"窒素ガス流量計","rev":"O","vendor":"メルテック／東京計装","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":246},{"anken":"湖南","prno":"23-084-14278","kiki":"炭化品含水率計","rev":"O","vendor":"メルテック／チノー","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":247},{"anken":"湖南","prno":"24-084-17996","kiki":"炭化炉（回転検知器）","rev":"O","vendor":"メルテック／オムロン","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":248},{"anken":"湖南","prno":"25-084-02225","kiki":"No.1,2炭化品養生装置（振動式レベルセンサ）","rev":"O","vendor":"メルテック／ノーケン","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":249},{"anken":"湖南","prno":"23-084-08482","kiki":"炭化炉（ヒータ）","rev":"O","vendor":"岡崎製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":250},{"anken":"湖南","prno":"25-084-09819","kiki":"乾燥汚泥貯留ホッパ（集塵装置）","rev":"O","vendor":"山田工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":251},{"anken":"湖南","prno":"25-084-09819","kiki":"No.1,2炭化品養生装置（集塵装置）","rev":"O","vendor":"山田工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":252},{"anken":"湖南","prno":"23-084-05296","kiki":"No.1消化槽撹拌機","rev":"O","vendor":"白石鉄工／リョーワ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":253},{"anken":"湖南","prno":"24-084-20272","kiki":"No.1,2炭化品養生装置（ヒータ）","rev":"O","vendor":"東京興業貿易商会","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":254},{"anken":"湖南","prno":"24-084-14464","kiki":"炭化炉（温度計）","rev":"O","vendor":"メルテック／山里産業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":255},{"anken":"湖南","prno":"24-084-21525","kiki":"現場ゲージ　第2回","rev":"O","vendor":"メルテック／大洋バルブ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":256},{"anken":"湖南","prno":"23-084-10504","kiki":"排気筒排ガス分析計","rev":"O","vendor":"ケーディーエス／富士電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":257},{"anken":"湖南","prno":"23-084-17937","kiki":"ガス分析計","rev":"O","vendor":"ケーディーエス／富士電機","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":258},{"anken":"湖南","prno":"23-084-00669","kiki":"排ガススクラバー（水銀吸着塔モジュール）","rev":"O","vendor":"日本ゴア","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":259},{"anken":"湖南","prno":"25-084-21115","kiki":"炭化品養生前加湿コンベヤ（水浴用温度計）","rev":"O","vendor":"メルテック／山里産業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":260},{"anken":"湖南その18","prno":"24-084-05622","kiki":"No.3-1,2ケーキ中継ポンプ アンカーボルト","rev":"O","vendor":"日東化成／兵神装備","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":261},{"anken":"湖南その18","prno":"24-084-15637","kiki":"No.3ケーキ中継ポンプ用ホッパ","rev":"O","vendor":"シーアンドシー","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025/10/2,3","kensa_kubun":"中間","kensa_place":"秋田","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":262},{"anken":"湖南その18","prno":"24-084-08367","kiki":"脱水汚泥用ボール弁（その1）","rev":"O","vendor":"キッツ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":263},{"anken":"湖南その18","prno":"25-084-08153","kiki":"No.3-1,2ケーキ中継ポンプ（コントローラ収納盤）","rev":"O","vendor":"アイベステクノ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":264},{"anken":"湖南その18","prno":"24-084-08367","kiki":"脱水汚泥用ボール弁（その2）","rev":"O","vendor":"キッツ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":265},{"anken":"湖南その18","prno":"24-084-20822","kiki":"ロードセル","rev":"O","vendor":"ＪＦＥアドバンテック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":266},{"anken":"湖南その18","prno":"24-084-15637","kiki":"No.2ケーキ中継ポンプ用ホッパ","rev":"O","vendor":"シーアンドシー","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2026-03-26","kensa_kubun":"社内","kensa_place":"秋田","kensa_inspector":"竹田","kensa_result":"","kensa_biko":"","id":267},{"anken":"湖南その19","prno":"24-084-07461","kiki":"No.1、4濃縮汚泥供給ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":268},{"anken":"湖南その19","prno":"24-084-07461","kiki":"No.1、4薬品供給ポンプ","rev":"O","vendor":"日東化成／兵神装備","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":269},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-4汚泥脱水機（架台）","rev":"O","vendor":"クボタ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":270},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-4汚泥脱水機（防音カバー）","rev":"O","vendor":"クボタ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":271},{"anken":"湖南その19","prno":"24-084-05214","kiki":"給水ユニット　アンカーボルト","rev":"O","vendor":"川本製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":272},{"anken":"湖南その19","prno":"24-084-09040","kiki":"無機凝集剤供給ポンプ","rev":"O","vendor":"日機装エイコー","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":273},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-4汚泥脱水機","rev":"O","vendor":"クボタ／広島メタル&マシナリー","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"2025-03-19","kensa_kubun":"社内","kensa_place":"広島","kensa_inspector":"石田","kensa_result":"","kensa_biko":"","id":274},{"anken":"湖南その19","prno":"24-084-05214","kiki":"給水ユニット","rev":"O","vendor":"川本製作所","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":275},{"anken":"湖南その19","prno":"25-084-00259","kiki":"No.3-4ケーキ圧送ポンプ（ロードセル）","rev":"O","vendor":"ＪＦＥアドバンテック","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":276},{"anken":"湖南その19","prno":"24-084-03760","kiki":"3-4遠心脱水機（制御盤）","rev":"O","vendor":"クボタ／共栄電器工業","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":277},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-1汚泥脱水機","rev":"O","vendor":"クボタ／広島メタル&マシナリー","y_status":"","y_biko":"","s_status":"特採発行待ち","s_biko":"","kensa_date":"2026-02-25","kensa_kubun":"社内","kensa_place":"広島","kensa_inspector":"石田","kensa_result":"合格","kensa_biko":"","id":278},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-1汚泥脱水機（架台）","rev":"O","vendor":"クボタ","y_status":"","y_biko":"","s_status":"発行済","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":279},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-1汚泥脱水機（防音カバー）","rev":"O","vendor":"クボタ／","y_status":"","y_biko":"","s_status":"特採発行待ち","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":280},{"anken":"魚住","prno":"22-084-04743","kiki":"9～12号ろ過池電磁弁盤、9～12号ろ過池共通","rev":"O","vendor":"八洲制御システム","y_status":"","y_biko":"","s_status":"2026-04-23","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":281},{"anken":"南蒲生","prno":"23-084-14651","kiki":"高濃度消化槽（NH4-N測定装置-1,2）","rev":"O","vendor":"リンカイ","y_status":"","y_biko":"","s_status":"2026-04-24","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":282},{"anken":"湖南","prno":"23-084-00511","kiki":"炭化炉（無停電電源装置）","rev":"O","vendor":"立花エレテック／TMEIC","y_status":"","y_biko":"","s_status":"発行予定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":283},{"anken":"湖南","prno":"24-084-21525","kiki":"現場ゲージ　第3回","rev":"O","vendor":"メルテック／東京計装","y_status":"","y_biko":"","s_status":"2026-04-10","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":284},{"anken":"湖南","prno":"24-084-05574","kiki":"炭化炉（ガス検知器、LED式回転灯）","rev":"O","vendor":"新コスモス電機","y_status":"","y_biko":"","s_status":"2026-04-17","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":285},{"anken":"湖南","prno":"24-084-21544","kiki":"温度計（燃料化施設）","rev":"O","vendor":"メルテック／山里産業","y_status":"","y_biko":"","s_status":"2026-04-24","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":286},{"anken":"湖南","prno":"25-084-00755","kiki":"パージセット","rev":"O","vendor":"メルテック／東京計装","y_status":"","y_biko":"","s_status":"2026-04-24","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":287},{"anken":"湖南","prno":"23-084-09991","kiki":"排ガススクラバー（pH計）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"2026-04-23","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":288},{"anken":"湖南","prno":"24-084-21535","kiki":"圧力計、流量計、レベル計","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"2026-04-23","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":289},{"anken":"湖南","prno":"25-084-21527","kiki":"ケースコンベヤ入口ノズル再製作","rev":"O","vendor":"エステック","y_status":"","y_biko":"","s_status":"発行予定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":290},{"anken":"湖南","prno":"22-084-18600","kiki":"No.1,2脱硫装置（脱硫剤）","rev":"O","vendor":"ミウラ化学装置","y_status":"","y_biko":"","s_status":"2025-02-03","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":291},{"anken":"湖南","prno":"23-084-09151","kiki":"No.1,2苛性ソーダ供給ポンプ（ヒータ､温度計）","rev":"O","vendor":"東京興業貿易商会","y_status":"","y_biko":"","s_status":"発行予定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":292},{"anken":"湖南その19","prno":"25-084-00259","kiki":"No.3-1ケーキ圧送ポンプ（ロードセル）","rev":"O","vendor":"ＪＦＥアドバンテック","y_status":"","y_biko":"","s_status":"2025-03-10","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":293},{"anken":"湖南","prno":"25-084-09454","kiki":"No.1,2炭化品養生装置（大気放出ダンパほか）","rev":"O","vendor":"日本バルブコントロールズ","y_status":"","y_biko":"","s_status":"発行予定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":294},{"anken":"湖南","prno":"23-084-22611","kiki":"排ガススクラバー（充填剤）","rev":"O","vendor":"マツイマシン","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":295},{"anken":"湖南","prno":"24-084-06536","kiki":"炭化品養生前加湿コンベヤ（加湿水流量計）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"2025-10-21","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":296},{"anken":"湖南","prno":"24-084-06536","kiki":"No.1,2炭化品養生後冷却コンベヤ（加湿水流量計）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"2025-10-21","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":297},{"anken":"湖南","prno":"24-084-06536","kiki":"No.1,2苛性ソーダ供給ポンプ（流量計）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"2025-10-21","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":298},{"anken":"湖南","prno":"24-084-06536","kiki":"No.1,2排水ポンプ（排水流量計）","rev":"O","vendor":"西川計測／横河電機","y_status":"","y_biko":"","s_status":"2025-10-21","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":299},{"anken":"湖南","prno":"24-084-14461","kiki":"No.1,2炭化品養生装置（湿度計）","rev":"O","vendor":"ベンダー選定中","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":300},{"anken":"湖南","prno":"未発行","kiki":"No.1,2炭化品養生後冷却コンベヤ（炭化品温度計）","rev":"O","vendor":"ベンダー選定中","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":301},{"anken":"湖南","prno":"未発行","kiki":"排ガススクラバー（排ガススクラバーシアン濃度計）","rev":"O","vendor":"ベンダー選定中","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":302},{"anken":"湖南","prno":"24-084-06535","kiki":"冷却装置（冷媒タンクレベル計）","rev":"O","vendor":"メルテック／","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":303},{"anken":"湖南","prno":"24-084-06535","kiki":"床排水ポンプ（床排水ピットレベル計）","rev":"O","vendor":"メルテック／","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":304},{"anken":"湖南","prno":"24-084-06535","kiki":"地下床排水ポンプ（地下床排水ピットレベル計）","rev":"O","vendor":"メルテック／","y_status":"","y_biko":"","s_status":"未定","s_biko":"","kensa_date":"","kensa_kubun":"","kensa_place":"","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":305},{"anken":"湖南","prno":"23-084-00667","kiki":"乾燥空気熱交換器（ガス冷却器　本体(2)(3)）","rev":"","vendor":"光南溶工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-04-08","kensa_kubun":"中間","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"","kensa_biko":"","id":306},{"anken":"湖南","prno":"23-084-02616","kiki":"白防空気熱交換器 燃焼空気熱交換器","rev":"","vendor":"神鋼商事／熱研産業","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-05-14","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":307},{"anken":"湖南","prno":"23-084-０5585","kiki":"ダクト （高温排ガスダクト　二次燃焼炉～白防空気熱交換器）","rev":"","vendor":"フジケンエンジニアリング","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-05-16","kensa_kubun":"社内","kensa_place":"愛媛","kensa_inspector":"大橋","kensa_result":"保留（ガスケット未入荷）→合格","kensa_biko":"","id":308},{"anken":"湖南","prno":"23-084-06335","kiki":"ケーキ定量フィーダ（作動検査）","rev":"","vendor":"シーアンドシー","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-05-27","kensa_kubun":"社内","kensa_place":"秋田","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":309},{"anken":"湖南","prno":"23-084-06335","kiki":"ケーキ定量フィーダ（完成検査）","rev":"","vendor":"シーアンドシー","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025/6/12,13","kensa_kubun":"社内","kensa_place":"秋田","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":310},{"anken":"湖南","prno":"22-084-22970","kiki":"炭化品養生前冷却コンベヤ(出口二重ダンパ) No.1,2炭化品養生装置(出口二重ダンパ) 炭化炉（出口二重ダンパ）","rev":"","vendor":"リックス／興永機工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-01","kensa_kubun":"社内","kensa_place":"奈良","kensa_inspector":"星野","kensa_result":"合格","kensa_biko":"","id":311},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1,2消化槽（シールポット、越流ポット）","rev":"","vendor":"白石鉄工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-02","kensa_kubun":"社内","kensa_place":"北九州市","kensa_inspector":"大橋","kensa_result":"保留（ミルシートなし）→合格","kensa_biko":"","id":312},{"anken":"湖南","prno":"23-084-03425","kiki":"No.1,2炭化品養生装置（下段）","rev":"","vendor":"光南溶工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-03","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":313},{"anken":"湖南","prno":"23-084-00667","kiki":"乾燥空気熱交換器（ガス冷却器　本体(1)）","rev":"","vendor":"光南溶工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-03","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":314},{"anken":"湖南","prno":"23-084-03429","kiki":"炭化品ホッパ(6段目）","rev":"","vendor":"フジケンエンジニアリング","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-11","kensa_kubun":"社内","kensa_place":"愛媛","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":315},{"anken":"湖南","prno":"23-084-04463","kiki":"白防空気ファン 燃焼空気ファン","rev":"","vendor":"昭和風力機械","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-31","kensa_kubun":"社内","kensa_place":"東京","kensa_inspector":"黒木","kensa_result":"合格","kensa_biko":"","id":316},{"anken":"湖南","prno":"23-084-04611","kiki":"炭化品振分コンベヤ 炭化品ホッパ（炭化品ホッパ排出コンベヤ）","rev":"","vendor":"アクト","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-07-31","kensa_kubun":"社内","kensa_place":"愛知","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":317},{"anken":"湖南","prno":"23-084-00668","kiki":"二次燃焼炉（上段）","rev":"","vendor":"栄製缶","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-08-26","kensa_kubun":"社内","kensa_place":"岐阜","kensa_inspector":"竹田","kensa_result":"合格","kensa_biko":"","id":318},{"anken":"湖南","prno":"23-084-03429","kiki":"炭化品ホッパ(上段）","rev":"","vendor":"フジケンエンジニアリング","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-09-03","kensa_kubun":"社内","kensa_place":"愛媛","kensa_inspector":"竹田","kensa_result":"保留","kensa_biko":"","id":319},{"anken":"湖南","prno":"23-084-02616","kiki":"乾燥空気熱交換器(No.1,2)","rev":"","vendor":"神鋼商事／熱研産業","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-09-12","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"江口","kensa_result":"合格","kensa_biko":"","id":320},{"anken":"湖南","prno":"23-084-03425","kiki":"No.1,2炭化品養生装置（上段）","rev":"","vendor":"光南溶工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-09-22","kensa_kubun":"社内","kensa_place":"岡山","kensa_inspector":"竹田、西江","kensa_result":"不合格→合格","kensa_biko":"","id":321},{"anken":"湖南","prno":"22-084-18786","kiki":"No.1,2消化槽（ドライブシャフトキー）","rev":"","vendor":"白石鉄工／リョーワ","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-09-26","kensa_kubun":"社内","kensa_place":"福岡","kensa_inspector":"西江","kensa_result":"合格","kensa_biko":"","id":322},{"anken":"湖南","prno":"22-084-18786","kiki":"消化槽撹拌機","rev":"","vendor":"白石鉄工／リョーワ","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025/10/7～13","kensa_kubun":"社内","kensa_place":"福岡","kensa_inspector":"西江、遠山","kensa_result":"No.2合格12/8現地搬入期限、No.1不合格1/上旬現地搬入期限","kensa_biko":"","id":323},{"anken":"湖南その1８","prno":"24-084-09922","kiki":"No.3,4ケーキ返送コンベヤ","rev":"","vendor":"アクト","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-11-20","kensa_kubun":"社内","kensa_place":"愛知","kensa_inspector":"竹田","kensa_result":"不合格（銘板誤記）","kensa_biko":"","id":324},{"anken":"湖南","prno":"25-084-15610","kiki":"消化槽撹拌機　ドライブシャフト","rev":"","vendor":"岡本精工","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2025-12-18","kensa_kubun":"社内","kensa_place":"三木市","kensa_inspector":"遠山、西江","kensa_result":"合格","kensa_biko":"","id":325},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-4汚泥脱水機（制御盤）","rev":"","vendor":"クボタ／共栄電器工業","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2026-01-06","kensa_kubun":"社内","kensa_place":"尼崎市","kensa_inspector":"高木","kensa_result":"合格","kensa_biko":"","id":326},{"anken":"酒匂川","prno":"24-084-03048","kiki":"ケーキ供給ポンプ","rev":"","vendor":"日東化成／兵神装備","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2026-02-09","kensa_kubun":"社内","kensa_place":"滋賀","kensa_inspector":"池田、石田","kensa_result":"不合格（図面相違）→合格","kensa_biko":"","id":327},{"anken":"湖南その19","prno":"24-084-03760","kiki":"No.3-1汚泥脱水機（制御盤）","rev":"","vendor":"クボタ／","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2026/3月","kensa_kubun":"社内","kensa_place":"","kensa_inspector":"","kensa_result":"7/現地搬入","kensa_biko":"","id":328},{"anken":"湖南その18","prno":"24-084-09923","kiki":"No.2ケーキ返送コンベヤ（既設改造）","rev":"","vendor":"間機設","y_status":"","y_biko":"","s_status":"","s_biko":"","kensa_date":"2026/4中旬","kensa_kubun":"社内","kensa_place":"大阪","kensa_inspector":"","kensa_result":"","kensa_biko":"","id":329}];
+let kRecords=[], kNextId=1, kEditId=null, kSortCol='prno', kSortDir=1, kFiltered=[], kPage=1;
+const KPS=20, KTODAY=new Date().toISOString().slice(0,10);
+
+const ANKEN_COLORS={'湖南':{bg:'#EEF2FF',c:'#4F46E5'},'湖南その18':{bg:'#FDF4FF',c:'#9333EA'},'湖南その19':{bg:'#FFF7ED',c:'#EA580C'},'湖南その1８':{bg:'#FFF7ED',c:'#EA580C'},'南蒲生':{bg:'#F0FDF4',c:'#16A34A'},'兵庫東':{bg:'#FFF1F2',c:'#E11D48'},'酒匂川':{bg:'#F0F9FF',c:'#0284C7'},'浄水セット':{bg:'#FEFCE8',c:'#CA8A04'},'上ヶ原':{bg:'#FFF1F2',c:'#BE185D'},'加古川上流':{bg:'#F0FDF4',c:'#15803D'},'さしま':{bg:'#FFF7ED',c:'#B45309'},'下関奥山':{bg:'#EFF6FF',c:'#1D4ED8'},'福井':{bg:'#F5F3FF',c:'#7C3AED'},'須恵':{bg:'#FFF1F2',c:'#9F1239'},'魚住':{bg:'#F0FDFA',c:'#0F766E'}};
+function ankenTag(n){const c=ANKEN_COLORS[n]||{bg:'#F1F5F9',c:'#475569'};return `<span class="anken-tag" style="background:${c.bg};color:${c.c}">${escH(n)}</span>`;}
+function yBadge(s){if(!s)return '<span class="badge bg-gray">未</span>';if(s==='発行済')return '<span class="badge bg-green">✓ 発行済</span>';if(s==='ブランクフォーマット確認済')return '<span class="badge bg-cyan">BF確認済</span>';if(s==='発行予定')return '<span class="badge bg-orange">予定</span>';return `<span class="badge bg-gray">${escH(s)}</span>`;}
+function sBadge(s){if(!s)return '<span class="badge bg-gray">未</span>';if(s==='発行済')return '<span class="badge bg-green">✓ 発行済</span>';if(s==='発行予定')return '<span class="badge bg-orange">予定</span>';if(s==='回覧中')return '<span class="badge bg-blue">回覧中</span>';if(s==='特採発行待ち')return '<span class="badge bg-purple">特採待</span>';if(s.match(/\d{4}[-\/]\d/))return `<span class="badge bg-blue">📅 ${escH(s)}</span>`;return `<span class="badge bg-gray">${escH(s)}</span>`;}
+function rBadge(s){if(!s)return '<span class="badge bg-gray">—</span>';if(s.startsWith('合格')||s.includes('→合格'))return '<span class="badge bg-green">✓ 合格</span>';if(s.startsWith('不合格'))return '<span class="badge bg-red">✗ 不合格</span>';if(s.startsWith('保留'))return '<span class="badge bg-orange">保留</span>';return `<span class="badge bg-gray" title="${escH(s)}">${escH(s.slice(0,6))}</span>`;}
+
+function kInit(){
+  const saved=localStorage.getItem('sg_kensa');
+  if(saved){try{const d=JSON.parse(saved);kRecords=d.records||[];kNextId=d.nextId||1;}catch(e){}}
+  if(!kRecords.length){kRecords=JSON.parse(JSON.stringify(KENSA_INITIAL));kNextId=Math.max(...kRecords.map(r=>r.id||0))+1;}
+  kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
+}
+function kSave(){try{localStorage.setItem('sg_kensa',JSON.stringify({records:kRecords,nextId:kNextId}));}catch(e){toast('保存できませんでした',true);}}
+
+function kPopulateAnken(){
+  const ankens=[...new Set(kRecords.map(r=>r.anken).filter(Boolean))].sort();
+  ['kfAnken','kSchedAnken'].forEach(id=>{const s=document.getElementById(id);const v=s.value;s.innerHTML='<option value="">案件すべて</option>';ankens.forEach(a=>s.innerHTML+=`<option>${a}</option>`);if([...s.options].some(o=>o.value===v))s.value=v;});
+  const dl=document.getElementById('anken-dl');dl.innerHTML='';ankens.forEach(a=>dl.innerHTML+=`<option value="${a}">`);
+}
+
+function kRenderDash(){
+  const total=kRecords.length,yDone=kRecords.filter(r=>r.y_status==='発行済').length,sDone=kRecords.filter(r=>r.s_status==='発行済').length,pend=kRecords.filter(r=>r.y_status==='発行済'&&!r.s_status).length;
+  document.getElementById('kStatsGrid').innerHTML=`
+    <div class="k-stat c1"><div class="k-stat-icon">📋</div><div><div class="k-stat-num">${total}</div><div class="k-stat-label">総レコード数</div></div></div>
+    <div class="k-stat c2"><div class="k-stat-icon">📄</div><div><div class="k-stat-num">${yDone}</div><div class="k-stat-label">要領書 発行済</div></div></div>
+    <div class="k-stat c2"><div class="k-stat-icon">✅</div><div><div class="k-stat-num">${sDone}</div><div class="k-stat-label">成績書 発行済</div></div></div>
+    <div class="k-stat c4"><div class="k-stat-icon">⚠️</div><div><div class="k-stat-num">${pend}</div><div class="k-stat-label">成績書 未発行</div></div></div>`;
+  const upc=kRecords.filter(r=>r.kensa_date&&r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30)).sort((a,b)=>a.kensa_date.localeCompare(b.kensa_date)).slice(0,8);
+  const ul=document.getElementById('kUpcomingList');
+  ul.innerHTML=upc.length?upc.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;"><span style="background:#EEF0FF;color:var(--blue);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${r.kensa_date}</span><span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><span style="font-size:11px;color:var(--muted)">${escH(r.anken)}</span></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">直近30日の検査はありません</p>';
+  const pendRecs=kRecords.filter(r=>r.y_status==='発行済'&&!r.s_status).slice(0,8);
+  const pl=document.getElementById('kPendingList');
+  pl.innerHTML=pendRecs.length?pendRecs.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;">${ankenTag(r.anken)}<span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><button class="kbtn kbtn-primary kbtn-sm" onclick="kOpenEdit(${r.id})">編集</button></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">すべて発行済みです 🎉</p>';
+}
+
+function kAddDays(d,n){const dt=new Date(d);dt.setDate(dt.getDate()+n);return dt.toISOString().slice(0,10);}
+
+function kApplyFilters(){
+  const q=(document.getElementById('kSearch')?.value||'').toLowerCase();
+  const an=document.getElementById('kfAnken')?.value||'';
+  const ys=document.getElementById('kfY')?.value||'';
+  const ss=document.getElementById('kfS')?.value||'';
+  kFiltered=kRecords.filter(r=>{
+    if(q&&![r.prno,r.kiki,r.vendor,r.anken].join(' ').toLowerCase().includes(q))return false;
+    if(an&&r.anken!==an)return false;
+    if(ys==='none'&&r.y_status)return false;
+    if(ys&&ys!=='none'&&r.y_status!==ys)return false;
+    if(ss==='pending'&&r.s_status)return false;
+    if(ss&&ss!=='pending'&&r.s_status!==ss)return false;
+    return true;
+  });
+  kFiltered.sort((a,b)=>{let va=a[kSortCol]||'',vb=b[kSortCol]||'';return va<vb?-kSortDir:va>vb?kSortDir:0;});
+  kPage=1;kRenderTable();kUpdateSortHdrs();
+}
+function kClearFilters(){document.getElementById('kSearch').value='';document.getElementById('kfAnken').value='';document.getElementById('kfY').value='';document.getElementById('kfS').value='';kApplyFilters();}
+function kSort(col){if(kSortCol===col)kSortDir*=-1;else{kSortCol=col;kSortDir=1;}kApplyFilters();}
+function kUpdateSortHdrs(){document.querySelectorAll('th[data-col]').forEach(th=>{th.classList.toggle('sorted',th.dataset.col===kSortCol);});}
+
+function kRenderTable(){
+  const total=kFiltered.length,pages=Math.max(1,Math.ceil(total/KPS));
+  if(kPage>pages)kPage=pages;
+  const st=(kPage-1)*KPS,sl=kFiltered.slice(st,st+KPS);
+  document.getElementById('kResultCount').textContent=`${total}件`;
+  document.getElementById('kPgInfo').textContent=`${st+1}〜${Math.min(st+KPS,total)} / ${total}件`;
+  if(!total){document.getElementById('kTableBody').innerHTML='<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted);">該当なし</td></tr>';document.getElementById('kPgBtns').innerHTML='';return;}
+  document.getElementById('kTableBody').innerHTML=sl.map(r=>`<tr>
+    <td>${ankenTag(r.anken)}</td>
+    <td style="font-size:11px;font-weight:bold;white-space:nowrap;">${escH(r.prno)}</td>
+    <td style="font-weight:bold;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r.kiki)}">${escH(r.kiki)}</td>
+    <td style="font-size:11px;color:var(--muted)">${escH(r.rev)}</td>
+    <td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r.vendor)}">${escH(r.vendor)}</td>
+    <td>${yBadge(r.y_status)}</td>
+    <td>${sBadge(r.s_status)}</td>
+    <td style="font-size:11px;white-space:nowrap;">${r.kensa_date?'📅 '+r.kensa_date:'<span style="color:#ccc">—</span>'}</td>
+    <td>${rBadge(r.kensa_result)}</td>
+    <td><div class="act-btns"><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button><button class="icon-btn ib-del" onclick="kDel(${r.id})">🗑</button></div></td>
+  </tr>`).join('');
+  const pArr=[];for(let i=1;i<=pages;i++)pArr.push(i);
+  document.getElementById('kPgBtns').innerHTML=pArr.map(i=>`<button class="pg${i===kPage?' active':''}" onclick="kGoto(${i})">${i}</button>`).join('');
+}
+function kGoto(n){kPage=n;kRenderTable();}
+
+function kRenderSched(){
+  const q=(document.getElementById('kSchedSearch')?.value||'').toLowerCase();
+  const an=document.getElementById('kSchedAnken')?.value||'';
+  const period=document.getElementById('kSchedPeriod')?.value||'';
+  let rows=kRecords.filter(r=>r.kensa_date);
+  if(q)rows=rows.filter(r=>[r.prno,r.kiki,r.anken].join(' ').toLowerCase().includes(q));
+  if(an)rows=rows.filter(r=>r.anken===an);
+  if(period==='past')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY);
+  else if(period==='week')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,7));
+  else if(period==='month')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30));
+  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY);
+  else if(period==='unset')rows=rows.filter(r=>!r.kensa_date.match(/\d{4}-\d{2}-\d{2}/));
+  rows.sort((a,b)=>{if(!a.kensa_date.match(/\d{4}-\d{2}-\d{2}/))return 1;if(!b.kensa_date.match(/\d{4}-\d{2}-\d{2}/))return -1;return a.kensa_date.localeCompare(b.kensa_date);});
+  const sl=document.getElementById('kSchedList');
+  if(!rows.length){sl.innerHTML='<p style="color:var(--muted);padding:16px;">該当データなし</p>';return;}
+  sl.innerHTML=rows.map(r=>{
+    const isPast=r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY,isToday=r.kensa_date===KTODAY;
+    const cls=isPast?'past':isToday?'today':'future';
+    const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
+    const dateDisp=m?`<div class="dd">${m[3]}</div><div class="ym">${m[1]}/${m[2]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
+    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">Rev.${escH(r.rev)}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(r.vendor)}</div><div class="sched-meta" style="margin-top:2px;">${r.kensa_kubun?'区分: '+escH(r.kensa_kubun)+' ':''}${r.kensa_place?'場所: '+escH(r.kensa_place)+' ':''}${r.kensa_inspector?'検査員: '+escH(r.kensa_inspector):''}</div></div><div>${rBadge(r.kensa_result)}</div><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button></div>`;
+  }).join('');
+}
+
+function openKTab(name){
+  ['dash','list','sched','import'].forEach(t=>{
+    document.getElementById('kpanel-'+t).style.display=t===name?'block':'none';
+  });
+  const btns=['dash','list','sched','import'];
+  btns.forEach(t=>{
+    const b=document.getElementById('ktab-'+t);
+    if(t===name){b.style.background='var(--blue)';b.style.color='#fff';}
+    else{b.style.background='transparent';b.style.color='#888';}
+  });
+  if(name==='list')kApplyFilters();
+  if(name==='sched')kRenderSched();
+}
+
+// モーダル
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>document.getElementById('kf-'+f).value='');['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kOverlay').classList.add('open');}
+function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-rev').value=r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=r.y_biko||'';document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=r.s_biko||'';document.getElementById('kf-kdate').value=r.kensa_date||'';document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kOverlay').classList.add('open');}
+function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
+function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
+
+function kSaveRecord(){
+  const anken=document.getElementById('kf-anken').value.trim(),prno=document.getElementById('kf-prno').value.trim(),kiki=document.getElementById('kf-kiki').value.trim();
+  if(!anken||!prno||!kiki){toast('案件名・PRNo・機器名称は必須です',true);return;}
+  const prev=kEditId?kRecords.find(r=>r.id===kEditId):null;
+  const data={anken,prno,kiki,rev:document.getElementById('kf-rev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_biko:document.getElementById('kf-ybiko').value.trim(),s_status:document.getElementById('kf-sstatus').value,s_biko:document.getElementById('kf-sbiko').value.trim(),kensa_date:document.getElementById('kf-kdate').value.trim(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value};
+  
+  // 褒め演出: 新規発行済みになった場合
+  const isNewYDone=data.y_status==='発行済'&&(!prev||prev.y_status!=='発行済');
+  const isNewSDone=data.s_status==='発行済'&&(!prev||prev.s_status!=='発行済');
+  const isNewPass=data.kensa_result==='合格'&&(!prev||prev.kensa_result!=='合格');
+
+  if(kEditId){const i=kRecords.findIndex(r=>r.id===kEditId);kRecords[i]={...kRecords[i],...data};toast('✅ 更新しました');}
+  else{kRecords.push({id:kNextId++,...data});toast('✅ 登録しました');}
+  
+  if(isNewYDone)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」要領書 発行済！`),300);
+  else if(isNewSDone)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」成績書 発行済！`),300);
+  else if(isNewPass)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」検査 合格！🎉`),300);
+
+  kCloseModal();kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
+}
+function kDel(id){if(!confirm('削除しますか？'))return;kRecords=kRecords.filter(r=>r.id!==id);kSave();kRenderDash();kApplyFilters();kRenderSched();toast('🗑 削除しました');}
+
+// CSV
+function kExportCSV(){
+  const rows=kFiltered.length?kFiltered:kRecords;
+  const hdrs=['案件名','PRNo','機器名称','Rev.','ベンダー名','要領書状況','要領書備考','成績書状況','成績書備考','検査日','区分','検査場所','検査員','検査結果'];
+  const csv=[hdrs,...rows.map(r=>[r.anken,r.prno,r.kiki,r.rev,r.vendor,r.y_status,r.y_biko,r.s_status,r.s_biko,r.kensa_date,r.kensa_kubun,r.kensa_place,r.kensa_inspector,r.kensa_result])].map(row=>row.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download=`検査管理_${KTODAY}.csv`;a.click();toast('📥 CSVを出力しました');
+}
+
+// インポート
+function kDzOver(e){e.preventDefault();document.getElementById('kDropZone').classList.add('dov');}
+function kDzLeave(){document.getElementById('kDropZone').classList.remove('dov');}
+function kDzDrop(e){e.preventDefault();kDzLeave();kImportFile(e.dataTransfer.files[0]);}
+function kImportFile(file){
+  if(!file)return;const log=document.getElementById('kImportLog');log.textContent='読み込み中...';
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+      const ws=wb.Sheets['週報'];if(!ws){log.textContent='「週報」シートが見つかりません';return;}
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
+      function gv(row,col){return(row&&row[col-1]!=null)?String(row[col-1]).trim():'';}
+      let added=0,updated=0;
+      function proc(s,e2,type){for(let i=s-1;i<Math.min(e2,rows.length);i++){const row=rows[i];const an=gv(row,5),pr=gv(row,8),ki=gv(row,11),rv=gv(row,19),vd=gv(row,21),st=gv(row,27);if(!pr&&!an)continue;const ex=kRecords.find(r2=>r2.prno===pr&&r2.kiki===ki);if(ex){if(type==='y'&&st)ex.y_status=st;if(type==='s'&&st)ex.s_status=st;if(!ex.vendor&&vd)ex.vendor=vd;updated++;}else{const nr={id:kNextId++,anken:an,prno:pr,kiki:ki,rev:rv,vendor:vd,y_status:type==='y'?st:'',y_biko:'',s_status:type==='s'?st:'',s_biko:'',kensa_date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:''};kRecords.push(nr);added++;}}}
+      proc(9,131,'y');proc(136,408,'s');
+      for(let i=413;i<Math.min(497,rows.length);i++){const row=rows[i];const an=gv(row,2),dt=gv(row,5),pr=gv(row,8),ki=gv(row,11),ku=gv(row,19),vd=gv(row,21),pl=gv(row,27),ins=gv(row,30),res=gv(row,34);if(!pr&&!an)continue;const ex=kRecords.find(r2=>r2.prno===pr&&r2.kiki===ki);if(ex){if(dt)ex.kensa_date=dt;if(ku)ex.kensa_kubun=ku;if(pl)ex.kensa_place=pl;if(ins)ex.kensa_inspector=ins;if(res)ex.kensa_result=res;updated++;}}
+      kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
+      log.innerHTML=`<span style="color:#10B981;font-weight:bold;">✅ 完了: 新規 ${added}件 / 更新 ${updated}件</span>`;
+      toast(`📥 インポート完了 +${added}件`);
+    }catch(err){log.textContent='エラー: '+err.message;}
+  };r.readAsBinaryString(file);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.addEventListener('load',()=>{
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
+  if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
+
+  // 推し事データ読み込み
+  const saved=localStorage.getItem('sg_v1');
+  if(saved){try{const d=JSON.parse(saved);imageCollection=d.images||[];taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);renderCollection();renderTasks();renderArchive();renderPhraseList('praise');renderPhraseList('remind');}catch(e){}}else{renderTasks();renderArchive();renderPhraseList('praise');renderPhraseList('remind');}
+
+  try{const q=localStorage.getItem('sg_imgqueue');if(q)imageQueue=JSON.parse(q);}catch(e){}
+  const svo=localStorage.getItem('sg_oshi');if(svo){try{const d=JSON.parse(svo);oshiList=d.list||[];}catch(e){}}
+  renderOshiList();
+  const svq=localStorage.getItem('sg_quiet');if(svq){try{quietMode=JSON.parse(svq);}catch(e){}}
+  document.getElementById('quiet-start').value=quietMode.start;document.getElementById('quiet-end').value=quietMode.end;renderQuietMode();
+  document.getElementById('quiet-start').addEventListener('change',e=>{quietMode.start=e.target.value;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(err){}});
+  document.getElementById('quiet-end').addEventListener('change',e=>{quietMode.end=e.target.value;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(err){}});
+  setBgColor(localStorage.getItem('sg_bg')||'#f8f9fa');
+
+  // 検査データ読み込み
+  kInit();
+
+  dateInput.addEventListener('input',()=>{datetimeWarn.style.display='none';});
+  timeInput.addEventListener('input',()=>{datetimeWarn.style.display='none';});
+  document.getElementById('oshi-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')addOshi();});
+  document.getElementById('praise-new-input').addEventListener('keydown',e=>{if(e.key==='Enter')addPhrase('praise');});
+  document.getElementById('remind-new-input').addEventListener('keydown',e=>{if(e.key==='Enter')addPhrase('remind');});
+});
+
+// グローバルスコープに公開（onclick属性からアクセスできるようにする）
+window.switchPanel=switchPanel;
+window.toggleArchive=toggleArchive;
+window.clearArchive=clearArchive;
+window.addOshi=addOshi;
+window.deleteOshi=deleteOshi;
+window.setOshiColor=setOshiColor;
+window.addPhrase=addPhrase;
+window.clearPhrases=clearPhrases;
+window.editPhrase=editPhrase;
+window.deletePhrase=deletePhrase;
+window.togglePhrase=togglePhrase;
+window.toggleQuietMode=toggleQuietMode;
+window.exportData=exportData;
+window.resetImages=resetImages;
+window.deleteImage=deleteImage;
+window.openKTab=openKTab;
+window.kOpenAdd=kOpenAdd;
+window.kOpenEdit=kOpenEdit;
+window.kCloseModal=kCloseModal;
+window.kBgClose=kBgClose;
+window.kSaveRecord=kSaveRecord;
+window.kDel=kDel;
+window.kExportCSV=kExportCSV;
+window.kSort=kSort;
+window.kClearFilters=kClearFilters;
+window.kGoto=kGoto;
+
+} catch(criticalError) {
+  console.error('起動エラー:',criticalError);
+  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
+}
+</script>
+</body>
+</html>
