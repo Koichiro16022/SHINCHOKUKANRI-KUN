@@ -344,7 +344,6 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
     <div class="archive-header">
       <h3>📦 完了履歴 (<span id="archive-count">0</span>)</h3>
       <button class="toggle-archive-btn" onclick="toggleArchive()">▼ 表示</button>
-      <button class="clear-archive-btn" onclick="clearArchive()">全削除</button>
     </div>
     <ul id="archive-list" style="display:none;"></ul>
   </div>
@@ -915,15 +914,19 @@ addBtn.addEventListener('click',()=>{
 
 // ── アーカイブ(完了履歴) ──────────────────────────
 function toggleArchive(){const l=document.getElementById('archive-list'),b=document.querySelector('.toggle-archive-btn');if(l.style.display==='none'){l.style.display='block';b.textContent='▲ 非表示';}else{l.style.display='none';b.textContent='▼ 表示';}}
-function clearArchive(){if(!archivedTasks.length)return;if(!confirm(`${archivedTasks.length}件を全削除？`))return;archivedTasks=[];saveData();renderArchive();}
+// kRecords履歴の非表示リスト（削除した履歴のキーを保持）
+let hiddenKDone=[];
+function saveHiddenKDone(){try{localStorage.setItem('sg_hkd',JSON.stringify(hiddenKDone))}catch(e){}}
+
 function renderArchive(){
   const al=document.getElementById('archive-list'),ac=document.getElementById('archive-count');
-  // 手動タスクの完了 + kRecordsの発行済み・結果あり
+  // kRecordsの発行済み・結果あり（非表示リストを除外）
   const kDone=[];
   kRecords.forEach(r=>{
-    if(r.y_status==='発行済') kDone.push({category:'要領書',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:'発行済',completedAt:''});
-    if(r.s_status==='発行済') kDone.push({category:'成績書',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:'発行済',completedAt:''});
-    if(r.kensa_result) kDone.push({category:'検査日',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:r.kensa_result,date:r.kensa_date,completedAt:''});
+    const key_y=`${r.id}_y`,key_s=`${r.id}_s`,key_k=`${r.id}_k`;
+    if(r.y_status==='発行済'&&!hiddenKDone.includes(key_y)) kDone.push({_key:key_y,category:'要領書',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:'発行済'});
+    if(r.s_status==='発行済'&&!hiddenKDone.includes(key_s)) kDone.push({_key:key_s,category:'成績書',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:'発行済'});
+    if(r.kensa_result&&!hiddenKDone.includes(key_k)) kDone.push({_key:key_k,category:'検査日',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:r.kensa_result,date:r.kensa_date});
   });
   const totalDone=archivedTasks.length+kDone.length;
   ac.textContent=totalDone;al.innerHTML='';
@@ -941,8 +944,8 @@ function renderArchive(){
     </div><div style="display:flex;gap:4px;"><button class="restore-btn" data-i="${i}">↩ 戻す</button><button class="archive-delete-btn" data-i="${i}">削除</button></div>`;
     al.appendChild(li);
   });
-  // kRecords完了(最新20件)
-  kDone.slice(0,20).forEach(t=>{
+  // kRecords完了（個別削除ボタン付き）
+  kDone.forEach(t=>{
     const color=getAnkenColor(t.anken||'');
     const catColor={'要領書':'#5B5FEF','成績書':'#10B981','検査日':'#F97316'}[t.category]||'#888';
     const li=document.createElement('li');
@@ -951,11 +954,21 @@ function renderArchive(){
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:3px;"><span style="font-size:10px;color:#fff;background:${catColor};border-radius:8px;padding:2px 7px;">${escH(t.category)}</span><span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 7px;">${escH(t.anken||'')}</span><span style="font-size:10px;color:#fff;background:#10B981;border-radius:8px;padding:2px 7px;">${escH(t.status)}</span></div>
       <div style="font-weight:bold;color:#999;">${escH(t.kiki||'')}</div>
       ${t.prno?`<div style="font-size:11px;color:#bbb;">PRNo: ${escH(t.prno)}</div>`:''}
-    </div>`;
+    </div><div style="display:flex;gap:4px;"><button class="archive-delete-btn" data-key="${escH(t._key)}">削除</button></div>`;
     al.appendChild(li);
   });
   al.querySelectorAll('.restore-btn').forEach(b=>b.addEventListener('click',()=>{const{completedAt,...r}=archivedTasks[+b.dataset.i];taskList.push(r);archivedTasks.splice(+b.dataset.i,1);saveData();renderTasks();}));
-  al.querySelectorAll('.archive-delete-btn').forEach(b=>b.addEventListener('click',()=>{if(!confirm('削除しますか？'))return;archivedTasks.splice(+b.dataset.i,1);saveData();renderArchive();}));
+  al.querySelectorAll('.archive-delete-btn').forEach(b=>b.addEventListener('click',()=>{
+    if(!confirm('履歴から削除しますか？'))return;
+    if(b.dataset.key){
+      // kRecords履歴を非表示リストに追加
+      hiddenKDone.push(b.dataset.key);saveHiddenKDone();
+    } else {
+      // 手動タスクの完了履歴を削除
+      archivedTasks.splice(+b.dataset.i,1);saveData();
+    }
+    renderArchive();
+  }));
 }
 
 // ── リマインド通知チェック（X日前） ──────────────
@@ -1128,5 +1141,4 @@ function kRenderSched(){
     const isPast=r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY,isToday=r.kensa_date===KTODAY;
     const cls=isPast?'past':isToday?'today':'future';
     const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
-    const dateDisp=m?`<div class="dd">${m[3]}</div><div class="ym">${m[1]}/${m[2]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
-    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">Rev.${escH(r.rev)}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(
+    
