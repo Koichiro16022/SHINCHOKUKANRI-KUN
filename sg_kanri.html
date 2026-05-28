@@ -954,10 +954,28 @@ function renderArchive(){
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:3px;"><span style="font-size:10px;color:#fff;background:${catColor};border-radius:8px;padding:2px 7px;">${escH(t.category)}</span><span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 7px;">${escH(t.anken||'')}</span><span style="font-size:10px;color:#fff;background:#10B981;border-radius:8px;padding:2px 7px;">${escH(t.status)}</span></div>
       <div style="font-weight:bold;color:#999;">${escH(t.kiki||'')}</div>
       ${t.prno?`<div style="font-size:11px;color:#bbb;">PRNo: ${escH(t.prno)}</div>`:''}
-    </div><div style="display:flex;gap:4px;"><button class="archive-delete-btn" data-key="${escH(t._key)}">削除</button></div>`;
+    </div><div style="display:flex;gap:4px;"><button class="restore-btn" data-key="${escH(t._key)}">↩ 戻す</button><button class="archive-delete-btn" data-key="${escH(t._key)}">削除</button></div>`;
     al.appendChild(li);
   });
-  al.querySelectorAll('.restore-btn').forEach(b=>b.addEventListener('click',()=>{const{completedAt,...r}=archivedTasks[+b.dataset.i];taskList.push(r);archivedTasks.splice(+b.dataset.i,1);saveData();renderTasks();}));
+  al.querySelectorAll('.restore-btn').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.key){
+      // kRecords履歴を未完了に戻す
+      if(!confirm('未完了に戻しますか？'))return;
+      const key=b.dataset.key;
+      const lastU=key.lastIndexOf('_');
+      const kId=key.slice(0,lastU),kType=key.slice(lastU+1);
+      const rec=kRecords.find(x=>x.id===kId);
+      if(!rec)return;
+      if(kType==='y'){rec.y_status='未発行';}
+      else if(kType==='s'){rec.s_status='未発行';}
+      else if(kType==='k'){rec.kensa_result='';}
+      kSave();renderTasks();renderArchive();kRenderDash();
+    } else {
+      // 手動タスクを未完了に戻す
+      const{completedAt,...r}=archivedTasks[+b.dataset.i];
+      taskList.push(r);archivedTasks.splice(+b.dataset.i,1);saveData();renderTasks();renderArchive();
+    }
+  }));
   al.querySelectorAll('.archive-delete-btn').forEach(b=>b.addEventListener('click',()=>{
     if(!confirm('履歴から削除しますか？'))return;
     if(b.dataset.key){
@@ -1132,13 +1150,4 @@ function kRenderSched(){
   if(period==='past')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY);
   else if(period==='week')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,7));
   else if(period==='month')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30));
-  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY);
-  else if(period==='unset')rows=rows.filter(r=>!r.kensa_date.match(/\d{4}-\d{2}-\d{2}/));
-  rows.sort((a,b)=>{if(!a.kensa_date.match(/\d{4}-\d{2}-\d{2}/))return 1;if(!b.kensa_date.match(/\d{4}-\d{2}-\d{2}/))return -1;return a.kensa_date.localeCompare(b.kensa_date);});
-  const sl=document.getElementById('kSchedList');
-  if(!rows.length){sl.innerHTML='<p style="color:var(--muted);padding:16px;">該当データなし</p>';return;}
-  sl.innerHTML=rows.map(r=>{
-    const isPast=r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY,isToday=r.kensa_date===KTODAY;
-    const cls=isPast?'past':isToday?'today':'future';
-    const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
-    
+  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&
