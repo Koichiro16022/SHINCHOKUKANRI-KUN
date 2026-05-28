@@ -228,7 +228,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
 
 <!-- TOP NAV -->
 <nav class="top-nav">
-  <button class="nav-btn active-oshi" id="nav-oshi" onclick="switchPanel('oshi')">💼 推し事管理</button>
+  <button class="nav-btn active-oshi" id="nav-oshi" onclick="switchPanel('oshi')">📋 進捗管理</button>
   <button class="nav-btn" id="nav-kensa" onclick="switchPanel('kensa')">🔬 検査図書管理</button>
   <button class="nav-btn settings-btn" id="nav-settings" onclick="switchPanel('settings')">⚙️ 設定</button>
 </nav>
@@ -1150,4 +1150,4 @@ function kRenderSched(){
   if(period==='past')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY);
   else if(period==='week')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,7));
   else if(period==='month')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30));
-  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4
+  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\
