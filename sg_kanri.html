@@ -1304,4 +1304,16 @@ window.kClearFilters=kClearFilters;
 window.kGoto=kGoto;
 window.setTaskFilter=setTaskFilter;
 window.toggleTaskForm=toggleTaskForm;
-window.onCatChange=
+window.onCatChange=onCatChange;
+window.completeKTask=completeKTask;
+window.completeManualTask=completeManualTask;
+window.startEditManual=startEditManual;
+window.deleteManualTask=deleteManualTask;
+
+} catch(criticalError) {
+  console.error('起動エラー:',criticalError);
+  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
+}
+</script>
+</body>
+</html>
