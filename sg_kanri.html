@@ -1150,4 +1150,170 @@ function kRenderSched(){
   if(period==='past')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY);
   else if(period==='week')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,7));
   else if(period==='month')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30));
-  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\
+  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY);
+  else if(period==='unset')rows=rows.filter(r=>!r.kensa_date.match(/\d{4}-\d{2}-\d{2}/));
+  rows.sort((a,b)=>{if(!a.kensa_date.match(/\d{4}-\d{2}-\d{2}/))return 1;if(!b.kensa_date.match(/\d{4}-\d{2}-\d{2}/))return -1;return a.kensa_date.localeCompare(b.kensa_date);});
+  const sl=document.getElementById('kSchedList');
+  if(!rows.length){sl.innerHTML='<p style="color:var(--muted);padding:16px;">該当データなし</p>';return;}
+  sl.innerHTML=rows.map(r=>{
+    const isPast=r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY,isToday=r.kensa_date===KTODAY;
+    const cls=isPast?'past':isToday?'today':'future';
+    const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
+    const dateDisp=m?`<div class="dd">${m[3]}</div><div class="ym">${m[1]}/${m[2]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
+    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">Rev.${escH(r.rev)}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(r.vendor)}</div><div class="sched-meta" style="margin-top:2px;">${r.kensa_kubun?'区分: '+escH(r.kensa_kubun)+' ':''}${r.kensa_place?'場所: '+escH(r.kensa_place)+' ':''}${r.kensa_inspector?'検査員: '+escH(r.kensa_inspector):''}</div></div><div>${rBadge(r.kensa_result)}</div><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button></div>`;
+  }).join('');
+}
+
+function openKTab(name){
+  ['dash','list','sched','import'].forEach(t=>{
+    document.getElementById('kpanel-'+t).style.display=t===name?'block':'none';
+  });
+  const btns=['dash','list','sched','import'];
+  btns.forEach(t=>{
+    const b=document.getElementById('ktab-'+t);
+    if(t===name){b.style.background='var(--blue)';b.style.color='#fff';}
+    else{b.style.background='transparent';b.style.color='#888';}
+  });
+  if(name==='list')kApplyFilters();
+  if(name==='sched')kRenderSched();
+}
+
+// モーダル
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>document.getElementById('kf-'+f).value='');['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kOverlay').classList.add('open');}
+function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-rev').value=r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=r.y_biko||'';document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=r.s_biko||'';document.getElementById('kf-kdate').value=r.kensa_date||'';document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kOverlay').classList.add('open');}
+function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
+function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
+
+function kSaveRecord(){
+  const anken=document.getElementById('kf-anken').value.trim(),prno=document.getElementById('kf-prno').value.trim(),kiki=document.getElementById('kf-kiki').value.trim();
+  if(!anken||!prno||!kiki){toast('案件名・PRNo・機器名称は必須です',true);return;}
+  const prev=kEditId?kRecords.find(r=>r.id===kEditId):null;
+  const data={anken,prno,kiki,rev:document.getElementById('kf-rev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_biko:document.getElementById('kf-ybiko').value.trim(),s_status:document.getElementById('kf-sstatus').value,s_biko:document.getElementById('kf-sbiko').value.trim(),kensa_date:document.getElementById('kf-kdate').value.trim(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value};
+  
+  // 褒め演出: 新規発行済みになった場合
+  const isNewYDone=data.y_status==='発行済'&&(!prev||prev.y_status!=='発行済');
+  const isNewSDone=data.s_status==='発行済'&&(!prev||prev.s_status!=='発行済');
+  const isNewPass=data.kensa_result==='合格'&&(!prev||prev.kensa_result!=='合格');
+
+  if(kEditId){const i=kRecords.findIndex(r=>r.id===kEditId);kRecords[i]={...kRecords[i],...data};toast('✅ 更新しました');}
+  else{kRecords.push({id:kNextId++,...data});toast('✅ 登録しました');}
+  
+  if(isNewYDone)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」要領書 発行済！`),300);
+  else if(isNewSDone)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」成績書 発行済！`),300);
+  else if(isNewPass)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」検査 合格！🎉`),300);
+
+  kCloseModal();kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
+}
+function kDel(id){if(!confirm('削除しますか？'))return;kRecords=kRecords.filter(r=>r.id!==id);kSave();kRenderDash();kApplyFilters();kRenderSched();toast('🗑 削除しました');}
+
+// CSV
+function kExportCSV(){
+  const rows=kFiltered.length?kFiltered:kRecords;
+  const hdrs=['案件名','PRNo','機器名称','Rev.','ベンダー名','要領書状況','要領書備考','成績書状況','成績書備考','検査日','区分','検査場所','検査員','検査結果'];
+  const csv=[hdrs,...rows.map(r=>[r.anken,r.prno,r.kiki,r.rev,r.vendor,r.y_status,r.y_biko,r.s_status,r.s_biko,r.kensa_date,r.kensa_kubun,r.kensa_place,r.kensa_inspector,r.kensa_result])].map(row=>row.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download=`検査管理_${KTODAY}.csv`;a.click();toast('📥 CSVを出力しました');
+}
+
+// インポート
+function kDzOver(e){e.preventDefault();document.getElementById('kDropZone').classList.add('dov');}
+function kDzLeave(){document.getElementById('kDropZone').classList.remove('dov');}
+function kDzDrop(e){e.preventDefault();kDzLeave();kImportFile(e.dataTransfer.files[0]);}
+function kImportFile(file){
+  if(!file)return;const log=document.getElementById('kImportLog');log.textContent='読み込み中...';
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+      const ws=wb.Sheets['週報'];if(!ws){log.textContent='「週報」シートが見つかりません';return;}
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
+      function gv(row,col){return(row&&row[col-1]!=null)?String(row[col-1]).trim():'';}
+      let added=0,updated=0;
+      function proc(s,e2,type){for(let i=s-1;i<Math.min(e2,rows.length);i++){const row=rows[i];const an=gv(row,5),pr=gv(row,8),ki=gv(row,11),rv=gv(row,19),vd=gv(row,21),st=gv(row,27);if(!pr&&!an)continue;const ex=kRecords.find(r2=>r2.prno===pr&&r2.kiki===ki);if(ex){if(type==='y'&&st)ex.y_status=st;if(type==='s'&&st)ex.s_status=st;if(!ex.vendor&&vd)ex.vendor=vd;updated++;}else{const nr={id:kNextId++,anken:an,prno:pr,kiki:ki,rev:rv,vendor:vd,y_status:type==='y'?st:'',y_biko:'',s_status:type==='s'?st:'',s_biko:'',kensa_date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:''};kRecords.push(nr);added++;}}}
+      proc(9,131,'y');proc(136,408,'s');
+      for(let i=413;i<Math.min(497,rows.length);i++){const row=rows[i];const an=gv(row,2),dt=gv(row,5),pr=gv(row,8),ki=gv(row,11),ku=gv(row,19),vd=gv(row,21),pl=gv(row,27),ins=gv(row,30),res=gv(row,34);if(!pr&&!an)continue;const ex=kRecords.find(r2=>r2.prno===pr&&r2.kiki===ki);if(ex){if(dt)ex.kensa_date=dt;if(ku)ex.kensa_kubun=ku;if(pl)ex.kensa_place=pl;if(ins)ex.kensa_inspector=ins;if(res)ex.kensa_result=res;updated++;}}
+      kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
+      log.innerHTML=`<span style="color:#10B981;font-weight:bold;">✅ 完了: 新規 ${added}件 / 更新 ${updated}件</span>`;
+      toast(`📥 インポート完了 +${added}件`);
+    }catch(err){log.textContent='エラー: '+err.message;}
+  };r.readAsBinaryString(file);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.addEventListener('load',()=>{
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
+  if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
+
+  // タスクデータ読み込み
+  const saved=localStorage.getItem('sg_v1');
+  if(saved){try{const d=JSON.parse(saved);imageCollection=d.images||[];taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);renderPhraseList('praise');renderPhraseList('remind');}catch(e){}}else{renderPhraseList('praise');renderPhraseList('remind');}
+
+  try{const q=localStorage.getItem('sg_imgqueue');if(q)imageQueue=JSON.parse(q);}catch(e){}
+  const svhkd=localStorage.getItem('sg_hkd');if(svhkd){try{hiddenKDone=JSON.parse(svhkd);}catch(e){}}
+
+  // 検査データ読み込み（先に読む：案件カラー生成に必要）
+  kInit();
+
+  // 案件カラー読み込み・自動生成
+  const svo=localStorage.getItem('sg_oshi');if(svo){try{const d=JSON.parse(svo);oshiList=d.list||[];}catch(e){}}
+  ensureAnkenColors();
+  saveOshiData();
+  renderOshiList();
+  populateAnkenDl();
+
+  // タスクリスト描画（kRecords読み込み後）
+  renderTasks();
+
+  const svq=localStorage.getItem('sg_quiet');if(svq){try{quietMode=JSON.parse(svq);}catch(e){}}
+  document.getElementById('quiet-start').value=quietMode.start;document.getElementById('quiet-end').value=quietMode.end;renderQuietMode();
+  document.getElementById('quiet-start').addEventListener('change',e=>{quietMode.start=e.target.value;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(err){}});
+  document.getElementById('quiet-end').addEventListener('change',e=>{quietMode.end=e.target.value;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(err){}});
+  setBgColor(localStorage.getItem('sg_bg')||'#f8f9fa');
+
+  document.getElementById('oshi-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')addOshi();});
+  document.getElementById('praise-new-input').addEventListener('keydown',e=>{if(e.key==='Enter')addPhrase('praise');});
+  document.getElementById('remind-new-input').addEventListener('keydown',e=>{if(e.key==='Enter')addPhrase('remind');});
+});
+
+// グローバルスコープに公開（onclick属性からアクセスできるようにする）
+window.switchPanel=switchPanel;
+window.toggleArchive=toggleArchive;
+window.addOshi=addOshi;
+window.deleteOshi=deleteOshi;
+window.setOshiColor=setOshiColor;
+window.addPhrase=addPhrase;
+window.clearPhrases=clearPhrases;
+window.editPhrase=editPhrase;
+window.deletePhrase=deletePhrase;
+window.togglePhrase=togglePhrase;
+window.toggleQuietMode=toggleQuietMode;
+window.exportData=exportData;
+window.resetImages=resetImages;
+window.deleteImage=deleteImage;
+window.openKTab=openKTab;
+window.kOpenAdd=kOpenAdd;
+window.kOpenEdit=kOpenEdit;
+window.kCloseModal=kCloseModal;
+window.kBgClose=kBgClose;
+window.kSaveRecord=kSaveRecord;
+window.kDel=kDel;
+window.kExportCSV=kExportCSV;
+window.kSort=kSort;
+window.kClearFilters=kClearFilters;
+window.kGoto=kGoto;
+window.setTaskFilter=setTaskFilter;
+window.toggleTaskForm=toggleTaskForm;
+window.onCatChange=onCatChange;
+window.completeKTask=completeKTask;
+window.completeManualTask=completeManualTask;
+window.startEditManual=startEditManual;
+window.deleteManualTask=deleteManualTask;
+
+} catch(criticalError) {
+  console.error('起動エラー:',criticalError);
+  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
+}
+</script>
+</body>
+</html>
