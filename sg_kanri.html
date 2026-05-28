@@ -750,7 +750,7 @@ function renderTasks(){
   // カテゴリフィルター
   if(activeTaskFilter!=='all') all=all.filter(t=>t.category===activeTaskFilter);
   // 検索フィルター
-  if(q) all=all.filter(t=>[t.prno,t.kiki,t.vendor,t.anken,t.text||''].join(' ').toLowerCase().includes(q));
+  if(q) all=all.filter(t=>[t.prno,t.kiki,t.vendor,t.anken,t.text||'',t.status||''].join(' ').toLowerCase().includes(q));
   // 日付昇順ソート（日付なしは末尾）
   all.sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));
 
