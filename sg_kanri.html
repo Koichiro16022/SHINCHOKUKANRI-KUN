@@ -859,7 +859,7 @@ function completeManualTask(i){
 }
 function startEditManual(i){
   const t=taskList[i];if(!t)return;
-  const f=document.getElementById;
+  const f=id=>document.getElementById(id);
   f('task-cat-input').value=t.category||'';onCatChange();
   f('task-anken-input').value=t.anken||'';
   f('task-prno-input').value=t.prno||'';
@@ -885,7 +885,7 @@ function deleteManualTask(i){
 // ── タスク追加フォーム ────────────────────────────
 addBtn.addEventListener('click',()=>{
   initAudio();
-  const f=document.getElementById;
+  const f=id=>document.getElementById(id);
   const cat=f('task-cat-input').value;
   const warn=f('task-warn');
   if(!cat){warn.style.display='block';return;}
@@ -1150,4 +1150,4 @@ function kRenderSched(){
   if(period==='past')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY);
   else if(period==='week')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,7));
   else if(period==='month')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30));
-  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&
+  else if(period==='future')rows=rows.filter(r=>r.kensa_date.match(/\d{4
