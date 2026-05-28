@@ -717,13 +717,13 @@ function getKPendingTasks(){
   const tasks=[];
   kRecords.forEach(r=>{
     if(r.y_status!=='発行済'){
-      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.y_status||'未発行',biko:r.y_biko||''});
+      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.y_status||'未発行',biko:r.y_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
     if(r.s_status!=='発行済'){
-      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.s_status||'未発行',biko:r.s_biko||''});
+      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
     if(r.kensa_date&&!r.kensa_result){
-      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date,status:'',biko:r.kensa_biko||''});
+      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date,status:'',biko:r.kensa_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
   });
   return tasks;
@@ -890,26 +890,46 @@ addBtn.addEventListener('click',()=>{
   const warn=f('task-warn');
   if(!cat){warn.style.display='block';return;}
   warn.style.display='none';
-  const td={
-    category:cat,
-    anken:f('task-anken-input').value.trim(),
-    prno:f('task-prno-input').value.trim(),
-    kiki:f('task-kiki-input').value.trim(),
-    vendor:f('task-vendor-input').value.trim(),
-    date:f('task-date-input').value,
-    status:cat!=='検査日'?f('task-status-input').value:'',
-    result:cat==='検査日'?f('task-result-input').value:'',
-    biko:f('task-biko-input').value.trim(),
-    remindDaysBefore:+f('task-remind-input').value,
-    notifyCount:0,lastNotifiedDate:'',completedAt:null,
-    text:f('task-kiki-input').value.trim()||f('task-biko-input').value.trim(),
-  };
-  if(editIndex>-1){taskList[editIndex]=td;editIndex=-1;addBtn.textContent='＋ タスクを追加';addBtn.classList.remove('edit-mode');}
-  else{taskList.push(td);}
+  const anken=f('task-anken-input').value.trim();
+  const prno=f('task-prno-input').value.trim();
+  const kiki=f('task-kiki-input').value.trim();
+  const vendor=f('task-vendor-input').value.trim();
+  const date=f('task-date-input').value;
+  const status=cat!=='検査日'?f('task-status-input').value:'';
+  const result=cat==='検査日'?f('task-result-input').value:'';
+  const biko=f('task-biko-input').value.trim();
+  const remind=+f('task-remind-input').value;
+
+  if(editIndex>-1){
+    // 既存の手動タスクを更新（後方互換）
+    taskList[editIndex]={category:cat,anken,prno,kiki,vendor,date,status,result,biko,remindDaysBefore:remind,notifyCount:0,lastNotifiedDate:'',completedAt:null,text:kiki||biko};
+    editIndex=-1;addBtn.textContent='＋ タスクを追加';addBtn.classList.remove('edit-mode');
+    saveData();
+  } else {
+    // 新規追加 → kRecordとして保存（マスターリストと同期）
+    const nr={
+      id:kNextId++,
+      anken,prno,
+      kiki:kiki||biko,
+      rev:'',vendor,
+      y_status:cat==='要領書'?status:'',
+      y_biko:cat==='要領書'?biko:'',
+      s_status:cat==='成績書'?status:'',
+      s_biko:cat==='成績書'?biko:'',
+      kensa_date:date,
+      kensa_kubun:'',kensa_place:'',kensa_inspector:'',
+      kensa_result:cat==='検査日'?result:'',
+      kensa_biko:cat==='検査日'?biko:'',
+      remindDaysBefore:remind,
+    };
+    kRecords.push(nr);
+    kSave();
+    ensureAnkenColors();saveOshiData();populateAnkenDl();kPopulateAnken();kRenderDash();
+  }
   // フォームリセット
   ['task-cat-input','task-anken-input','task-prno-input','task-kiki-input','task-vendor-input','task-date-input','task-biko-input'].forEach(id=>f(id).value='');
   f('task-status-input').value='未発行';f('task-result-input').value='';f('task-remind-input').value='3';onCatChange();
-  saveData();renderTasks();toast('タスクを追加しました');
+  renderTasks();toast('タスクを追加しました');
 });
 
 // ── アーカイブ(完了履歴) ──────────────────────────
@@ -1288,32 +1308,4 @@ window.editPhrase=editPhrase;
 window.deletePhrase=deletePhrase;
 window.togglePhrase=togglePhrase;
 window.toggleQuietMode=toggleQuietMode;
-window.exportData=exportData;
-window.resetImages=resetImages;
-window.deleteImage=deleteImage;
-window.openKTab=openKTab;
-window.kOpenAdd=kOpenAdd;
-window.kOpenEdit=kOpenEdit;
-window.kCloseModal=kCloseModal;
-window.kBgClose=kBgClose;
-window.kSaveRecord=kSaveRecord;
-window.kDel=kDel;
-window.kExportCSV=kExportCSV;
-window.kSort=kSort;
-window.kClearFilters=kClearFilters;
-window.kGoto=kGoto;
-window.setTaskFilter=setTaskFilter;
-window.toggleTaskForm=toggleTaskForm;
-window.onCatChange=onCatChange;
-window.completeKTask=completeKTask;
-window.completeManualTask=completeManualTask;
-window.startEditManual=startEditManual;
-window.deleteManualTask=deleteManualTask;
-
-} catch(criticalError) {
-  console.error('起動エラー:',criticalError);
-  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
-}
-</script>
-</body>
-</html>
+window.exportData=ex
