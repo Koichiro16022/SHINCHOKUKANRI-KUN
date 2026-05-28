@@ -202,6 +202,16 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
 .help-section h3{font-size:14px;font-weight:bold;color:#444;margin:0 0 6px;padding-bottom:5px;border-bottom:2px solid #eee;}
 .help-section p{font-size:13px;color:#555;line-height:1.7;margin:0;white-space:pre-wrap;}
 
+/* ── タスクフィルターバー ── */
+.task-filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;}
+.task-filter-btn{padding:7px 16px;border:2px solid #ddd;border-radius:20px;background:#fff;color:#888;font-size:12px;font-weight:bold;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.task-filter-btn:hover{border-color:#bbb;color:#555;}
+.task-filter-btn.active{color:#fff;border-color:transparent;}
+.task-filter-btn.f-all.active{background:#888;}
+.task-filter-btn.f-yoryo.active{background:var(--blue);}
+.task-filter-btn.f-seiseki.active{background:#10B981;}
+.task-filter-btn.f-kensabi.active{background:#F97316;}
+
 /* トースト */
 .toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:6px;}
 .toast{background:#fff;border-radius:8px;padding:10px 15px;box-shadow:0 4px 16px rgba(0,0,0,.14);font-size:12px;font-weight:bold;display:flex;align-items:center;gap:7px;border-left:3px solid #10B981;min-width:190px;animation:ti .25s ease;}
@@ -273,6 +283,12 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         </div>
         <input type="text" id="todo-input" placeholder="次のタスクは何？">
         <button id="add-btn">タスクを追加</button>
+      </div>
+      <div class="task-filter-bar">
+        <button class="task-filter-btn f-all active" onclick="setTaskFilter('all')">📋 全て</button>
+        <button class="task-filter-btn f-yoryo" onclick="setTaskFilter('要領書')">📄 要領書</button>
+        <button class="task-filter-btn f-seiseki" onclick="setTaskFilter('成績書')">📝 成績書</button>
+        <button class="task-filter-btn f-kensabi" onclick="setTaskFilter('検査日')">📅 検査日</button>
       </div>
       <ul id="todo-list"></ul>
       <div class="archive-section" style="margin-top:8px;">
@@ -597,6 +613,29 @@ let praiseList=["天才！！","最高！","さすがだよ！","偉すぎる！
 let remindList=["時間だよー！","忘れてない？","今から頑張ろう！","次のタスク、進めていきましょう","集中力を高めて、一気に進めましょう","さあ、ここからが本番ですよ","次へ進む準備はいいですか？","集中して、一気に片付けましょう","期待しています。さあ、始めましょう","気合いを入れていきましょう","さあ、伝説の始まりや！","時間やで！気合い入れていくでー！","あんたの実力、見せつける時間やで！","よっしゃ！エンジン全開で行こか！","あんたがやらな誰がやるんよ！","あんたの実力、見せつける時間ばい！","あんたなら余裕やん？楽勝ばい！","あんたのスピード、見せてみんね！","今日一番の山場よ、ここから！","あんたの閃き、すごかー！楽しみ！"];
 let oshiList=[];
 let countdownTarget=null;
+let activeTaskFilter='all';
+
+// デフォルトカテゴリ（要領書・成績書・検査日）を自動登録
+const DEFAULT_CATEGORIES=[
+  {name:'要領書', color:'#5B5FEF'},
+  {name:'成績書', color:'#10B981'},
+  {name:'検査日', color:'#F97316'},
+];
+function ensureDefaultCategories(){
+  DEFAULT_CATEGORIES.forEach(dc=>{
+    if(!oshiList.some(o=>o.name===dc.name)) oshiList.push({name:dc.name,color:dc.color});
+  });
+}
+
+function setTaskFilter(filter){
+  activeTaskFilter=filter;
+  document.querySelectorAll('.task-filter-btn').forEach(b=>{
+    b.classList.remove('active');
+    const map={'all':'f-all','要領書':'f-yoryo','成績書':'f-seiseki','検査日':'f-kensabi'};
+    if(b.classList.contains(map[filter])) b.classList.add('active');
+  });
+  renderTasks();
+}
 let quietMode={enabled:false,start:'23:00',end:'07:00'};
 
 const addBtn=document.getElementById('add-btn');
@@ -647,12 +686,24 @@ function renderOshiSelect(){
 function renderTasks(){
   taskList.sort((a,b)=>((a.date||'9999')+(a.time||'23:59')).localeCompare((b.date||'9999')+(b.time||'23:59')));
   todoList.innerHTML='';
-  taskList.forEach((t,i)=>{
+  // フィルター適用
+  const visibleTasks=taskList.map((t,i)=>({t,i})).filter(({t})=>{
+    if(activeTaskFilter==='all') return true;
+    const catName=t.oshiIdx!=null&&t.oshiIdx>=0&&t.oshiIdx<oshiList.length?oshiList[t.oshiIdx].name:'';
+    return catName===activeTaskFilter;
+  });
+  if(visibleTasks.length===0){
+    todoList.innerHTML=`<li style="text-align:center;color:#bbb;font-size:13px;padding:20px;">タスクがありません</li>`;
+    document.title=taskList.length>0?`(${taskList.length}) 進捗管理くん`:'進捗管理くん';
+    renderCountdown();return;
+  }
+  visibleTasks.forEach(({t,i})=>{
     const li=document.createElement('li');li.className='task-item';li.dataset.oshiIdx=t.oshiIdx??-1;
     const notifyDone=t.maxNotify>0&&(t.notifyCount||0)>=t.maxNotify;
     const intTxt={5:'5分ごと',10:'10分ごと',15:'15分ごと',30:'30分ごと',60:'1時間ごと',1440:'1日ごと'}[t.interval]||(t.interval>0?`${t.interval}分ごと`:null);
-    li.innerHTML=`<div style="flex:1"><div style="font-size:11px;color:#999">${escH(t.date||'')} ${escH(t.time||'')}</div>${intTxt?`<div style="font-size:10px;color:#aaa;margin-top:1px;">🔁 ${intTxt}${t.maxNotify>0?' / 上限'+t.maxNotify+'回':''} ${t.notifyCount>0?'('+t.notifyCount+'回済)':''}</div>`:''}<div style="font-weight:bold;">${t.isMain?'⭐ ':''}${escH(t.text)}</div>${notifyDone?'<span class="notify-done-badge">🔕 通知終了</span>':''}</div><div class="btn-group"><button class="edit-task-btn" data-i="${i}">修正</button><button class="complete-btn" data-i="${i}">完了！</button><button class="delete-task-btn" data-i="${i}">削除</button></div>`;
     const o=t.oshiIdx!=null&&t.oshiIdx>=0&&t.oshiIdx<oshiList.length?oshiList[t.oshiIdx]:null;
+    const catBadge=o?`<span style="font-size:10px;font-weight:bold;color:#fff;background:${o.color};border-radius:8px;padding:2px 8px;margin-left:6px;">${escH(o.name)}</span>`:'';
+    li.innerHTML=`<div style="flex:1"><div style="font-size:11px;color:#999;display:flex;align-items:center;">${escH(t.date||'')} ${escH(t.time||'')}${catBadge}</div>${intTxt?`<div style="font-size:10px;color:#aaa;margin-top:1px;">🔁 ${intTxt}${t.maxNotify>0?' / 上限'+t.maxNotify+'回':''} ${t.notifyCount>0?'('+t.notifyCount+'回済)':''}</div>`:''}<div style="font-weight:bold;">${t.isMain?'⭐ ':''}${escH(t.text)}</div>${notifyDone?'<span class="notify-done-badge">🔕 通知終了</span>':''}</div><div class="btn-group"><button class="edit-task-btn" data-i="${i}">修正</button><button class="complete-btn" data-i="${i}">完了！</button><button class="delete-task-btn" data-i="${i}">削除</button></div>`;
     li.style.borderLeftColor=o?o.color:'#AAAAAA';
     todoList.appendChild(li);
   });
@@ -979,59 +1030,4 @@ window.addEventListener('load',()=>{
 
   // 推し事データ読み込み
   const saved=localStorage.getItem('sg_v1');
-  if(saved){try{const d=JSON.parse(saved);imageCollection=d.images||[];taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);renderCollection();renderTasks();renderArchive();renderPhraseList('praise');renderPhraseList('remind');}catch(e){}}else{renderTasks();renderArchive();renderPhraseList('praise');renderPhraseList('remind');}
-
-  try{const q=localStorage.getItem('sg_imgqueue');if(q)imageQueue=JSON.parse(q);}catch(e){}
-  const svo=localStorage.getItem('sg_oshi');if(svo){try{const d=JSON.parse(svo);oshiList=d.list||[];}catch(e){}}
-  renderOshiList();
-  const svq=localStorage.getItem('sg_quiet');if(svq){try{quietMode=JSON.parse(svq);}catch(e){}}
-  document.getElementById('quiet-start').value=quietMode.start;document.getElementById('quiet-end').value=quietMode.end;renderQuietMode();
-  document.getElementById('quiet-start').addEventListener('change',e=>{quietMode.start=e.target.value;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(err){}});
-  document.getElementById('quiet-end').addEventListener('change',e=>{quietMode.end=e.target.value;try{localStorage.setItem('sg_quiet',JSON.stringify(quietMode))}catch(err){}});
-  setBgColor(localStorage.getItem('sg_bg')||'#f8f9fa');
-
-  // 検査データ読み込み
-  kInit();
-
-  dateInput.addEventListener('input',()=>{datetimeWarn.style.display='none';});
-  timeInput.addEventListener('input',()=>{datetimeWarn.style.display='none';});
-  document.getElementById('oshi-name-input').addEventListener('keydown',e=>{if(e.key==='Enter')addOshi();});
-  document.getElementById('praise-new-input').addEventListener('keydown',e=>{if(e.key==='Enter')addPhrase('praise');});
-  document.getElementById('remind-new-input').addEventListener('keydown',e=>{if(e.key==='Enter')addPhrase('remind');});
-});
-
-// グローバルスコープに公開（onclick属性からアクセスできるようにする）
-window.switchPanel=switchPanel;
-window.toggleArchive=toggleArchive;
-window.clearArchive=clearArchive;
-window.addOshi=addOshi;
-window.deleteOshi=deleteOshi;
-window.setOshiColor=setOshiColor;
-window.addPhrase=addPhrase;
-window.clearPhrases=clearPhrases;
-window.editPhrase=editPhrase;
-window.deletePhrase=deletePhrase;
-window.togglePhrase=togglePhrase;
-window.toggleQuietMode=toggleQuietMode;
-window.exportData=exportData;
-window.resetImages=resetImages;
-window.deleteImage=deleteImage;
-window.openKTab=openKTab;
-window.kOpenAdd=kOpenAdd;
-window.kOpenEdit=kOpenEdit;
-window.kCloseModal=kCloseModal;
-window.kBgClose=kBgClose;
-window.kSaveRecord=kSaveRecord;
-window.kDel=kDel;
-window.kExportCSV=kExportCSV;
-window.kSort=kSort;
-window.kClearFilters=kClearFilters;
-window.kGoto=kGoto;
-
-} catch(criticalError) {
-  console.error('起動エラー:',criticalError);
-  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
-}
-</script>
-</body>
-</
+  if(saved){try{const d=JSON.parse(saved);imageCollection=d.images||[];taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);renderCollection()
