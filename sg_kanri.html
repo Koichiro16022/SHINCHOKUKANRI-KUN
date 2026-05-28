@@ -669,10 +669,13 @@ const addBtn=document.getElementById('add-btn');
 // ── 案件カラー管理 ────────────────────────────────
 const ANKEN_DEFAULT_COLORS=['#5B5FEF','#10B981','#F97316','#EF4444','#EC4899','#8B5CF6','#14B8A6','#F59E0B','#3B82F6','#84CC16','#06B6D4','#A855F7','#D946EF','#6366F1','#22C55E'];
 function ensureAnkenColors(){
-  const ankens=[...new Set(kRecords.map(r=>r.anken).filter(Boolean))].sort();
-  ankens.forEach((a,i)=>{if(!oshiList.some(o=>o.name===a))oshiList.push({name:a,color:ANKEN_DEFAULT_COLORS[i%ANKEN_DEFAULT_COLORS.length]});});
+  // 全角→半角に正規化してからユニーク案件名を取得
+  const ankens=[...new Set(kRecords.map(r=>normalizeAnken(r.anken)).filter(Boolean))].sort();
+  ankens.forEach((a,i)=>{if(!oshiList.some(o=>normalizeAnken(o.name)===a))oshiList.push({name:a,color:ANKEN_DEFAULT_COLORS[i%ANKEN_DEFAULT_COLORS.length]});});
 }
-function getAnkenColor(anken){const f=oshiList.find(o=>o.name===anken);return f?f.color:'#AAAAAA';}
+// 全角数字→半角に正規化してから案件名を比較
+function normalizeAnken(s){return (s||'').replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));}
+function getAnkenColor(anken){const n=normalizeAnken(anken);const f=oshiList.find(o=>normalizeAnken(o.name)===n);return f?f.color:'#AAAAAA';}
 function saveOshiData(){try{localStorage.setItem('sg_oshi',JSON.stringify({list:oshiList}))}catch(e){}}
 function setOshiColor(c){document.getElementById('oshi-color-input').value=c;}
 function addOshi(){const ni=document.getElementById('oshi-name-input'),ci=document.getElementById('oshi-color-input'),name=ni.value.trim();if(!name){alert('案件名を入力');return;}if(oshiList.some(o=>o.name===name)){oshiList.find(o=>o.name===name).color=ci.value;}else{oshiList.push({name,color:ci.value});}ni.value='';saveOshiData();renderOshiList();}
@@ -1126,4 +1129,4 @@ function kRenderSched(){
     const cls=isPast?'past':isToday?'today':'future';
     const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
     const dateDisp=m?`<div class="dd">${m[3]}</div><div class="ym">${m[1]}/${m[2]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
-    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">Rev.${escH(r.rev)}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(r.vendor)}</div><div class="sched-meta" style="margin-top:2px;">${r.kensa_kubun?'区分: '+escH(r.kensa_kubun)+' ':''}${r.kensa_place?'場所: '+escH(r.kensa_place)+' ':''}${r.kensa_inspector?'検査員: '+escH(r.kensa_inspector):''}</div></div><div>${rBadge(r.kensa_result)}</div><button class="icon-btn ib-edit" onclick="kOpenE
+    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">Rev.${escH(r.rev)}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(
