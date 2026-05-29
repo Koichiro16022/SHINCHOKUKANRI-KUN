@@ -285,6 +285,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <label>🔄 Rev:</label>
         <input type="text" id="task-rev-input" list="rev-dl" placeholder="改訂番号（O/A/B/C または任意入力）" style="flex:1;margin:0;">
         <datalist id="rev-dl"><option value="O"><option value="A"><option value="B"><option value="C"></datalist>
+        <datalist id="kubun-dl"><option value="中間検査"><option value="完成検査"><option value="客先検査"></datalist>
       </div>
       <!-- 機器名称 -->
       <div class="row-group">
@@ -589,7 +590,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="sec-label">検査予定</div>
       <div class="form-grid">
         <div class="fg"><label>検査日</label><input type="date" id="kf-kdate"></div>
-        <div class="fg"><label>区分</label><input type="text" id="kf-kubun" list="kubun-dl" placeholder="区分を選択または入力"><datalist id="kubun-dl"><option value="中間検査"><option value="完成検査"><option value="客先検査"></datalist></div>
+        <div class="fg"><label>区分</label><input type="text" id="kf-kubun" list="kubun-dl" placeholder="区分を選択または入力"></div>
         <div class="fg"><label>検査場所</label><input id="kf-place"></div>
         <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
         <div class="fg full"><label>検査結果</label>
