@@ -283,7 +283,8 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <!-- Rev -->
       <div class="row-group">
         <label>🔄 Rev:</label>
-        <input type="text" id="task-rev-input" placeholder="改訂番号（例: A, 1）" style="flex:1;margin:0;">
+        <input type="text" id="task-rev-input" list="rev-dl" placeholder="改訂番号（O/A/B/C または任意入力）" style="flex:1;margin:0;">
+        <datalist id="rev-dl"><option value="O"><option value="A"><option value="B"><option value="C"></datalist>
       </div>
       <!-- 機器名称 -->
       <div class="row-group">
@@ -724,13 +725,13 @@ function getKPendingTasks(){
   const tasks=[];
   kRecords.forEach(r=>{
     if(r.y_status!=='発行済'){
-      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.y_status||'未発行',biko:r.y_biko||''});
+      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.y_status||'未発行',biko:r.y_biko||''});
     }
     if(r.s_status!=='発行済'){
-      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.s_status||'未発行',biko:r.s_biko||''});
+      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date||'',status:r.s_status||'未発行',biko:r.s_biko||''});
     }
     if(r.kensa_date&&!r.kensa_result){
-      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',vendor:r.vendor||'',date:r.kensa_date,status:'',biko:r.kensa_biko||''});
+      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',biko:r.kensa_biko||''});
     }
   });
   return tasks;
@@ -793,6 +794,7 @@ function renderTasks(){
     // 発行状況バッジ
     const stMap={'未発行':'#EF4444','回覧中':'#F59E0B','発行済':'#10B981'};
     const stBadge=t.status?`<span style="font-size:10px;color:#fff;background:${stMap[t.status]||'#888'};border-radius:8px;padding:2px 8px;">${escH(t.status)}</span>`:'';
+    const revBadge=t.rev?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
 
     const mainInfo=`<div style="font-weight:bold;font-size:14px;margin:4px 0;">${escH(t.kiki||t.text||'')}</div>`;
     const subInfo=[t.prno?`PRNo: ${escH(t.prno)}`:'',t.vendor?`${escH(t.vendor)}`:''].filter(Boolean).join(' ／ ');
@@ -803,7 +805,7 @@ function renderTasks(){
       :`<div class="btn-group"><button class="complete-btn" data-midx="${t._manualIdx}">✅ 完了</button><button class="edit-task-btn" data-midx="${t._manualIdx}">修正</button><button class="delete-task-btn" data-midx="${t._manualIdx}">削除</button></div>`;
 
     li.innerHTML=`<div style="flex:1">
-      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:4px;">${catBadge}${ankenBadge}${stBadge}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:4px;">${ankenBadge}${catBadge}${revBadge}${stBadge}</div>
       ${mainInfo}
       ${subInfo?`<div style="font-size:12px;color:#888;">${subInfo}</div>`:''}
       <div style="font-size:12px;color:#aaa;margin-top:3px;display:flex;align-items:center;gap:4px;">${t.date?`📅 ${fmtDate(t.date)}`:''}${dateBadge}</div>
