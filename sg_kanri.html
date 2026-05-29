@@ -183,6 +183,11 @@ table.k-tbl td{padding:8px 11px;font-size:12px;vertical-align:middle;}
 .fg{display:flex;flex-direction:column;gap:4px;justify-content:flex-end;}
 .fg label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
 .fg input,.fg select,.fg textarea{margin:0;padding:8px 10px;border:1.5px solid #ddd;border-radius:7px;font-size:13px;font-family:inherit;width:100%;box-sizing:border-box;}
+.cdl-wrap{position:relative;}
+.cdl-list{position:fixed;background:#fff;border:1.5px solid #ddd;border-radius:7px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:9999;min-width:120px;display:none;max-height:200px;overflow-y:auto;}
+.cdl-list.open{display:block;}
+.cdl-item{padding:8px 12px;font-size:13px;cursor:pointer;color:#333;}
+.cdl-item:hover{background:#f0f4ff;}
 .fg textarea{resize:vertical;min-height:55px;}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .form-grid .full{grid-column:1/-1;}
@@ -590,7 +595,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="sec-label">検査予定</div>
       <div class="form-grid">
         <div class="fg"><label>検査日</label><input type="date" id="kf-kdate"></div>
-        <div class="fg"><label>区分</label><input type="text" id="kf-kubun" list="kubun-dl" placeholder="区分を選択または入力"><datalist id="kubun-dl"><option value="中間検査"><option value="完成検査"><option value="客先検査"></datalist></div>
+        <div class="fg"><label>区分</label><div class="cdl-wrap"><input type="text" id="kf-kubun" placeholder="区分を選択または入力" autocomplete="off" onfocus="cdlShow('kf-kubun','kubun-cdl')" oninput="cdlShow('kf-kubun','kubun-cdl')"><div class="cdl-list" id="kubun-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','中間検査')">中間検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','完成検査')">完成検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','客先検査')">客先検査</div></div></div></div>
         <div class="fg"><label>検査場所</label><input id="kf-place"></div>
         <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
         <div class="fg full"><label>検査結果</label>
@@ -1267,6 +1272,26 @@ function kImportFile(file){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // INIT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// カスタムドロップダウン
+function cdlShow(inputId, listId){
+  const inp=document.getElementById(inputId);
+  const list=document.getElementById(listId);
+  const rect=inp.getBoundingClientRect();
+  list.style.left=rect.left+'px';
+  list.style.top=(rect.bottom+2)+'px';
+  list.style.width=rect.width+'px';
+  list.classList.add('open');
+}
+function cdlPick(inputId, listId, val){
+  document.getElementById(inputId).value=val;
+  document.getElementById(listId).classList.remove('open');
+}
+document.addEventListener('click', function(e){
+  document.querySelectorAll('.cdl-list.open').forEach(function(l){
+    if(!l.previousElementSibling||!l.previousElementSibling.contains(e.target)) l.classList.remove('open');
+  });
+});
 window.addEventListener('load',()=>{
   canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
