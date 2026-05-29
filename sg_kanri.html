@@ -839,7 +839,7 @@ function renderTasks(){
     b.addEventListener('click',()=>{
       if(b.dataset.kid){
         if(!confirm('このレコードをマスターリストから削除しますか？'))return;
-        kDel(+b.dataset.kid);
+        kDel(+b.dataset.kid,true);
       } else {
         deleteManualTask(+b.dataset.midx);
       }
@@ -1242,7 +1242,7 @@ function kSaveRecord(){
 
   kCloseModal();kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();renderTasks();
 }
-function kDel(id){if(!confirm('削除しますか？'))return;kRecords=kRecords.filter(r=>r.id!==id);kSave();kRenderDash();kApplyFilters();kRenderSched();toast('🗑 削除しました');}
+function kDel(id,skipConfirm){if(!skipConfirm&&!confirm('削除しますか？'))return;kRecords=kRecords.filter(r=>r.id!==id);kSave();kRenderDash();kApplyFilters();kRenderSched();renderTasks();toast('🗑 削除しました');}
 
 // CSV
 function kExportCSV(){
