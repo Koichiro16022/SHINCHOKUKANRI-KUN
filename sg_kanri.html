@@ -1227,7 +1227,7 @@ function kSaveRecord(){
   else if(isNewSDone)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」成績書 発行済！`),300);
   else if(isNewPass)setTimeout(()=>showShowerEffect(praiseList.join(','),`「${kiki}」検査 合格！🎉`),300);
 
-  kCloseModal();kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
+  kCloseModal();kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();renderTasks();
 }
 function kDel(id){if(!confirm('削除しますか？'))return;kRecords=kRecords.filter(r=>r.id!==id);kSave();kRenderDash();kApplyFilters();kRenderSched();toast('🗑 削除しました');}
 
