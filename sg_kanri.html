@@ -630,6 +630,8 @@ function showShowerEffect(wordSource,topWord){
 document.getElementById('praise-overlay').addEventListener('click',()=>{document.getElementById('praise-overlay').style.display='none';showerActive=false;});
 
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtDate(s){if(!s)return '';const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[1]}/${+m[2]}/${+m[3]}`:s;}
+
 function toast(msg,err=false){const el=document.createElement('div');el.className='toast'+(err?' err':'');el.textContent=msg;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3000);}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -799,7 +801,7 @@ function renderTasks(){
       <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:4px;">${catBadge}${ankenBadge}${stBadge}</div>
       ${mainInfo}
       ${subInfo?`<div style="font-size:12px;color:#888;">${subInfo}</div>`:''}
-      <div style="font-size:12px;color:#aaa;margin-top:3px;display:flex;align-items:center;gap:4px;">${t.date?`📅 ${escH(t.date)}`:''}${dateBadge}</div>
+      <div style="font-size:12px;color:#aaa;margin-top:3px;display:flex;align-items:center;gap:4px;">${t.date?`📅 ${fmtDate(t.date)}`:''}${dateBadge}</div>
       ${bikoInfo}
     </div>${btnHtml}`;
     todoList.appendChild(li);
@@ -1087,7 +1089,7 @@ function kRenderDash(){
     <div class="k-stat c4"><div class="k-stat-icon">⚠️</div><div><div class="k-stat-num">${pend}</div><div class="k-stat-label">成績書 未発行</div></div></div>`;
   const upc=kRecords.filter(r=>r.kensa_date&&r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30)).sort((a,b)=>a.kensa_date.localeCompare(b.kensa_date)).slice(0,8);
   const ul=document.getElementById('kUpcomingList');
-  ul.innerHTML=upc.length?upc.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;"><span style="background:#EEF0FF;color:var(--blue);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${r.kensa_date}</span><span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><span style="font-size:11px;color:var(--muted)">${escH(r.anken)}</span></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">直近30日の検査はありません</p>';
+  ul.innerHTML=upc.length?upc.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;"><span style="background:#EEF0FF;color:var(--blue);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${fmtDate(r.kensa_date)}</span><span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><span style="font-size:11px;color:var(--muted)">${escH(r.anken)}</span></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">直近30日の検査はありません</p>';
   const pendRecs=kRecords.filter(r=>r.y_status==='発行済'&&!r.s_status).slice(0,8);
   const pl=document.getElementById('kPendingList');
   pl.innerHTML=pendRecs.length?pendRecs.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;">${ankenTag(r.anken)}<span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><button class="kbtn kbtn-primary kbtn-sm" onclick="kOpenEdit(${r.id})">編集</button></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">すべて発行済みです 🎉</p>';
@@ -1131,7 +1133,7 @@ function kRenderTable(){
     <td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r.vendor)}">${escH(r.vendor)}</td>
     <td>${yBadge(r.y_status)}</td>
     <td>${sBadge(r.s_status)}</td>
-    <td style="font-size:11px;white-space:nowrap;">${r.kensa_date?'📅 '+r.kensa_date:'<span style="color:#ccc">—</span>'}</td>
+    <td style="font-size:11px;white-space:nowrap;">${r.kensa_date?'📅 '+fmtDate(r.kensa_date):'<span style="color:#ccc">—</span>'}</td>
     <td>${rBadge(r.kensa_result)}</td>
     <td><div class="act-btns"><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button><button class="icon-btn ib-del" onclick="kDel(${r.id})">🗑</button></div></td>
   </tr>`).join('');
