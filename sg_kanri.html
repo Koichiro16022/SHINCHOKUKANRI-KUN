@@ -776,7 +776,7 @@ function renderTasks(){
     document.title='進捗管理くん';renderArchive();return;
   }
 
-  const today=new Date().toISOString().slice(0,10);
+  const _tn=new Date();const today=`${_tn.getFullYear()}-${String(_tn.getMonth()+1).padStart(2,'0')}-${String(_tn.getDate()).padStart(2,'0')}`;
   all.forEach(t=>{
     const li=document.createElement('li');li.className='task-item';
     const color=getAnkenColor(t.anken);
@@ -785,7 +785,7 @@ function renderTasks(){
     // 日付の緊急度
     let dateBadge='';
     if(t.date){
-      const diff=Math.ceil((new Date(t.date)-new Date(today))/86400000);
+      const _dp=t.date.split('-').map(Number),_tp=today.split('-').map(Number);const diff=Math.round((new Date(_dp[0],_dp[1]-1,_dp[2])-new Date(_tp[0],_tp[1]-1,_tp[2]))/86400000);
       if(diff<0) dateBadge=`<span style="color:#EF4444;font-size:10px;font-weight:bold;margin-left:4px;">⚠️ 期限超過</span>`;
       else if(diff===0) dateBadge=`<span style="color:#EF4444;font-size:10px;font-weight:bold;margin-left:4px;">🔥 今日</span>`;
       else if(diff<=3) dateBadge=`<span style="color:#F97316;font-size:10px;font-weight:bold;margin-left:4px;">⏰ あと${diff}日</span>`;
@@ -1027,11 +1027,11 @@ function renderQuietMode(){const btn=document.getElementById('quiet-mode-toggle'
 
 setInterval(()=>{
   if(isQuietTime())return;
-  const today=new Date().toISOString().slice(0,10);
+  const _tn3=new Date();const today=`${_tn3.getFullYear()}-${String(_tn3.getMonth()+1).padStart(2,'0')}-${String(_tn3.getDate()).padStart(2,'0')}`;
   const allTasks=[...getKPendingTasks(),...taskList.filter(t=>!t.completedAt)];
   allTasks.forEach(t=>{
     if(!t.date||!t.remindDaysBefore)return;
-    const diff=Math.ceil((new Date(t.date)-new Date(today))/86400000);
+    const _dp2=t.date.split('-').map(Number),_tp2=today.split('-').map(Number);const diff=Math.round((new Date(_dp2[0],_dp2[1]-1,_dp2[2])-new Date(_tp2[0],_tp2[1]-1,_tp2[2]))/86400000);
     if(diff<0||diff>t.remindDaysBefore)return;
     const key=`remind_${t._kId||JSON.stringify({p:t.prno,c:t.category})}_${today}`;
     if(localStorage.getItem(key))return;
