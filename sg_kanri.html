@@ -304,11 +304,13 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <!-- 発行状況 (要領書/成績書のみ) -->
       <div class="row-group" id="task-status-row">
         <label>📋 発行状況:</label>
-        <select id="task-status-input" style="flex:1;margin:0;">
-          <option value="未発行">未発行</option>
-          <option value="回覧中">回覧中</option>
-          <option value="発行済">発行済</option>
-        </select>
+        <input type="text" id="task-status-input" list="status-dl" placeholder="発行状況を選択または入力" style="flex:1;margin:0;">
+        <datalist id="status-dl">
+          <option value="未発行">
+          <option value="回覧中">
+          <option value="特採発行待ち">
+          <option value="発行済">
+        </datalist>
       </div>
       <!-- 検査結果 (検査日のみ) -->
       <div class="row-group" id="task-result-row" style="display:none;">
@@ -573,14 +575,14 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="sec-label">検査要領書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
-          <select id="kf-ystatus"><option value="">（未）</option><option value="発行済">発行済</option><option value="ブランクフォーマット確認済">BF確認済</option><option value="回覧中">回覧中</option></select>
+          <input type="text" id="kf-ystatus" list="ystatus-dl" placeholder="未発行 / 回覧中 / 発行済…"><datalist id="ystatus-dl"><option value="未発行"><option value="回覧中"><option value="特採発行待ち"><option value="発行済"></datalist>
         </div>
         <div class="fg"><label>備考</label><input id="kf-ybiko"></div>
       </div>
       <div class="sec-label">検査成績書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
-          <select id="kf-sstatus"><option value="">（未）</option><option value="発行済">発行済</option><option value="回覧中">回覧中</option><option value="特採発行待ち">特採発行待ち</option><option value="未定">未定</option></select>
+          <input type="text" id="kf-sstatus" list="sstatus-dl" placeholder="未発行 / 回覧中 / 発行済…"><datalist id="sstatus-dl"><option value="未発行"><option value="回覧中"><option value="特採発行待ち"><option value="発行済"></datalist>
         </div>
         <div class="fg"><label>発行予定日・備考</label><input id="kf-sbiko" placeholder="例: 2026-06-01"></div>
       </div>
@@ -792,7 +794,7 @@ function renderTasks(){
     const ankenBadge=t.anken?`<span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 8px;">${escH(t.anken)}</span>`:'';
 
     // 発行状況バッジ
-    const stMap={'未発行':'#EF4444','回覧中':'#F59E0B','発行済':'#10B981'};
+    const stMap={'未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981'};
     const stBadge=t.status?`<span style="font-size:10px;color:#fff;background:${stMap[t.status]||'#888'};border-radius:8px;padding:2px 8px;">${escH(t.status)}</span>`:'';
     const revBadge=t.rev?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
 
