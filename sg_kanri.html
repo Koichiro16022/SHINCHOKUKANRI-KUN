@@ -933,6 +933,7 @@ function saveHiddenKDone(){try{localStorage.setItem('sg_hkd',JSON.stringify(hidd
 
 function renderArchive(){
   const al=document.getElementById('archive-list'),ac=document.getElementById('archive-count');
+  const aq=(document.getElementById('main-search')?.value||'').toLowerCase().trim();
   // kRecordsの発行済み・結果あり（非表示リストを除外）
   const kDone=[];
   kRecords.forEach(r=>{
@@ -941,11 +942,22 @@ function renderArchive(){
     if(r.s_status==='発行済'&&!hiddenKDone.includes(key_s)) kDone.push({_key:key_s,category:'成績書',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:'発行済'});
     if(r.kensa_result&&!hiddenKDone.includes(key_k)) kDone.push({_key:key_k,category:'検査日',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:r.kensa_result,date:r.kensa_date});
   });
+  // 検索フィルター適用
+  let filteredArchived=archivedTasks.map((t,i)=>({...t,_origIdx:i}));
+  let filteredKDone=[...kDone];
+  if(aq){
+    filteredArchived=filteredArchived.filter(t=>[t.prno,t.kiki,t.text,t.vendor,t.anken,t.status].join(' ').toLowerCase().includes(aq));
+    filteredKDone=filteredKDone.filter(t=>[t.prno,t.kiki,t.vendor,t.anken,t.status].join(' ').toLowerCase().includes(aq));
+  }
   const totalDone=archivedTasks.length+kDone.length;
-  ac.textContent=totalDone;al.innerHTML='';
+  const totalFiltered=filteredArchived.length+filteredKDone.length;
+  ac.textContent=aq?`${totalFiltered}/${totalDone}`:totalDone;al.innerHTML='';
+  if(aq&&totalFiltered===0){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">該当する完了タスクはありません</li>';if(totalDone>0&&al.style.display==='none'){al.style.display='block';}return;}
   if(!totalDone){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">完了済みタスクはありません</li>';return;}
+  // 検索中は自動展開
+  if(aq&&al.style.display==='none') al.style.display='block';
   // 手動完了タスク
-  archivedTasks.forEach((t,i)=>{
+  filteredArchived.forEach((t,_)=>{const i=t._origIdx;
     const color=getAnkenColor(t.anken||'');
     const catColor={'要領書':'#5B5FEF','成績書':'#10B981','検査日':'#F97316'}[t.category]||'#888';
     const li=document.createElement('li');
@@ -958,7 +970,7 @@ function renderArchive(){
     al.appendChild(li);
   });
   // kRecords完了（個別削除ボタン付き）
-  kDone.forEach(t=>{
+  filteredKDone.forEach(t=>{
     const color=getAnkenColor(t.anken||'');
     const catColor={'要領書':'#5B5FEF','成績書':'#10B981','検査日':'#F97316'}[t.category]||'#888';
     const li=document.createElement('li');
