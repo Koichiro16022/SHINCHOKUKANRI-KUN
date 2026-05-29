@@ -630,7 +630,7 @@ function showShowerEffect(wordSource,topWord){
 document.getElementById('praise-overlay').addEventListener('click',()=>{document.getElementById('praise-overlay').style.display='none';showerActive=false;});
 
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function fmtDate(s){if(!s)return '';const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[1]}/${+m[2]}/${+m[3]}`:s;}
+function fmtDate(s){if(!s)return '';let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return `${m[1]}/${+m[2]}/${+m[3]}`;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);if(m)return `20${m[3]}/${+m[1]}/${+m[2]}`;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}/${+m[1]}/${+m[2]}`;return s;}
 
 function toast(msg,err=false){const el=document.createElement('div');el.className='toast'+(err?' err':'');el.textContent=msg;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3000);}
 
