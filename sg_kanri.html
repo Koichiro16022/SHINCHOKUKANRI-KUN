@@ -280,6 +280,11 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <label>🔢 PRNo:</label>
         <input type="text" id="task-prno-input" placeholder="PRNo" style="flex:1;margin:0;">
       </div>
+      <!-- Rev -->
+      <div class="row-group">
+        <label>🔄 Rev:</label>
+        <input type="text" id="task-rev-input" placeholder="改定番号（例: A, 1）" style="flex:1;margin:0;">
+      </div>
       <!-- 機器名称 -->
       <div class="row-group">
         <label>⚙️ 機器名:</label>
@@ -865,6 +870,7 @@ function startEditManual(i){
   f('task-cat-input').value=t.category||'';onCatChange();
   f('task-anken-input').value=t.anken||'';
   f('task-prno-input').value=t.prno||'';
+  f('task-rev-input').value=t.rev||'';
   f('task-kiki-input').value=t.kiki||'';
   f('task-vendor-input').value=t.vendor||'';
   f('task-date-input').value=t.date||'';
@@ -895,6 +901,7 @@ addBtn.addEventListener('click',()=>{
   const anken=f('task-anken-input').value.trim();
   const prno=f('task-prno-input').value.trim();
   const kiki=f('task-kiki-input').value.trim();
+  const rev=f('task-rev-input').value.trim();
   const vendor=f('task-vendor-input').value.trim();
   const date=f('task-date-input').value;
   const status=cat!=='検査日'?f('task-status-input').value:'';
@@ -902,14 +909,14 @@ addBtn.addEventListener('click',()=>{
   const biko=f('task-biko-input').value.trim();
   const remind=+f('task-remind-input').value;
   if(editIndex>-1){
-    taskList[editIndex]={category:cat,anken,prno,kiki,vendor,date,status,result,biko,remindDaysBefore:remind,notifyCount:0,lastNotifiedDate:'',completedAt:null,text:kiki||biko};
+    taskList[editIndex]={category:cat,anken,prno,kiki,rev,vendor,date,status,result,biko,remindDaysBefore:remind,notifyCount:0,lastNotifiedDate:'',completedAt:null,text:kiki||biko};
     editIndex=-1;addBtn.textContent='＋ タスクを追加';addBtn.classList.remove('edit-mode');
     saveData();
   } else {
-    const nr={id:kNextId++,anken,prno,kiki:kiki||biko,rev:'',vendor,y_status:cat==='要領書'?status:'',y_biko:cat==='要領書'?biko:'',s_status:cat==='成績書'?status:'',s_biko:cat==='成績書'?biko:'',kensa_date:date,kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',remindDaysBefore:remind};
+    const nr={id:kNextId++,anken,prno,kiki:kiki||biko,rev,vendor,y_status:cat==='要領書'?status:'',y_biko:cat==='要領書'?biko:'',s_status:cat==='成績書'?status:'',s_biko:cat==='成績書'?biko:'',kensa_date:date,kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',remindDaysBefore:remind};
     kRecords.push(nr);kSave();ensureAnkenColors();saveOshiData();populateAnkenDl();kPopulateAnken();kRenderDash();
   }
-  ['task-cat-input','task-anken-input','task-prno-input','task-kiki-input','task-vendor-input','task-date-input','task-biko-input'].forEach(id=>f(id).value='');
+  ['task-cat-input','task-anken-input','task-prno-input','task-rev-input','task-kiki-input','task-vendor-input','task-date-input','task-biko-input'].forEach(id=>f(id).value='');
   f('task-status-input').value='未発行';f('task-result-input').value='';f('task-remind-input').value='3';onCatChange();
   renderTasks();toast('タスクを追加しました');
 });
