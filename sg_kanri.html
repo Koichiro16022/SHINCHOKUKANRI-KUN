@@ -172,11 +172,11 @@ table.k-tbl td{padding:8px 11px;font-size:12px;vertical-align:middle;}
 /* モーダル */
 .k-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
 .k-overlay.open{opacity:1;pointer-events:all;}
-.k-modal{background:#fff;border-radius:14px;width:600px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.2);transform:translateY(14px);transition:transform .2s;}
+.k-modal{background:#fff;border-radius:14px;width:600px;max-width:95vw;max-height:90vh;overflow:visible;box-shadow:0 10px 40px rgba(0,0,0,.2);transform:translateY(14px);transition:transform .2s;}
 .k-overlay.open .k-modal{transform:none;}
 .k-modal-hd{padding:16px 20px 12px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;}
 .k-modal-hd h2{font-size:15px;font-weight:bold;}
-.k-modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+.k-modal-body{padding:16px 20px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(90vh - 60px);}
 .k-modal-ft{padding:12px 20px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end;}
 .k-close{width:28px;height:28px;border:none;border-radius:6px;background:#eee;color:#888;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;}
 .k-close:hover{background:#ddd;}
@@ -590,17 +590,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="sec-label">検査予定</div>
       <div class="form-grid">
         <div class="fg"><label>検査日</label><input type="date" id="kf-kdate"></div>
-        <div class="fg"><label>区分</label>
-          <select id="kf-kubun-sel" onchange="(function(){var v=this.value;document.getElementById('kf-kubun').value=v==='__other__'?'':v;document.getElementById('kf-kubun-other').style.display=v==='__other__'?'block':'none';}).call(this)" style="margin:0;width:100%;">
-            <option value="">—</option>
-            <option value="中間検査">中間検査</option>
-            <option value="完成検査">完成検査</option>
-            <option value="客先検査">客先検査</option>
-            <option value="__other__">その他（任意入力）</option>
-          </select>
-          <input type="text" id="kf-kubun-other" placeholder="区分を入力" style="display:none;margin:4px 0 0;" oninput="document.getElementById('kf-kubun').value=this.value">
-          <input type="hidden" id="kf-kubun">
-        </div>
+        <div class="fg"><label>区分</label><input type="text" id="kf-kubun" list="kubun-dl" placeholder="区分を選択または入力"><datalist id="kubun-dl"><option value="中間検査"><option value="完成検査"><option value="客先検査"></datalist></div>
         <div class="fg"><label>検査場所</label><input id="kf-place"></div>
         <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
         <div class="fg full"><label>検査結果</label>
@@ -1215,8 +1205,8 @@ function openKTab(name){
 }
 
 // モーダル
-function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-kubun').value='';document.getElementById('kf-kubun-sel').value='';document.getElementById('kf-kubun-other').style.display='none';document.getElementById('kf-kubun-other').value='';document.getElementById('kOverlay').classList.add('open');}
-function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-rev').value=r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=r.y_date||'';document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=r.s_date||'';document.getElementById('kf-kdate').value=r.kensa_date||'';(function(){var v=r.kensa_kubun||'';var opts=['中間検査','完成検査','客先検査'];var sel=document.getElementById('kf-kubun-sel');document.getElementById('kf-kubun').value=v;if(!v){sel.value='';}else if(opts.includes(v)){sel.value=v;document.getElementById('kf-kubun-other').style.display='none';}else{sel.value='__other__';document.getElementById('kf-kubun-other').value=v;document.getElementById('kf-kubun-other').style.display='block';}})();document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kOverlay').classList.add('open');}
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kOverlay').classList.add('open');}
+function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-rev').value=r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=r.y_date||'';document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=r.s_date||'';document.getElementById('kf-kdate').value=r.kensa_date||'';document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kOverlay').classList.add('open');}
 function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
 function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
 
