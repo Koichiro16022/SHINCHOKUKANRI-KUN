@@ -581,14 +581,14 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="sec-label">検査要領書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
-          <input type="text" id="kf-ystatus" list="ystatus-dl" placeholder="未発行 / 回覧中 / 発行済…"><datalist id="ystatus-dl"><option value="未発行"><option value="回覧中"><option value="発行済"></datalist>
+          <div class="cdl-wrap"><input type="text" id="kf-ystatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-ystatus','ystatus-cdl')" oninput="cdlShow('kf-ystatus','ystatus-cdl')"><div class="cdl-list" id="ystatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','未発行')">未発行</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','発行済')">発行済</div></div></div>
         </div>
         <div class="fg"><label>発行予定日</label><input type="date" id="kf-ybiko"></div>
       </div>
       <div class="sec-label">検査成績書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
-          <input type="text" id="kf-sstatus" list="sstatus-dl" placeholder="未発行 / 回覧中 / 発行済…"><datalist id="sstatus-dl"><option value="未発行"><option value="回覧中"><option value="特採発行待ち"><option value="発行済"></datalist>
+          <div class="cdl-wrap"><input type="text" id="kf-sstatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-sstatus','sstatus-cdl')" oninput="cdlShow('kf-sstatus','sstatus-cdl')"><div class="cdl-list" id="sstatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','未発行')">未発行</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','特採発行待ち')">特採発行待ち</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','発行済')">発行済</div></div></div>
         </div>
         <div class="fg"><label>発行予定日</label><input type="date" id="kf-sbiko"></div>
       </div>
