@@ -989,7 +989,7 @@ function renderArchive(){
       const key=b.dataset.key;
       const lastU=key.lastIndexOf('_');
       const kId=key.slice(0,lastU),kType=key.slice(lastU+1);
-      const rec=kRecords.find(x=>x.id===kId);
+      const rec=kRecords.find(x=>x.id===+kId||x.id===kId);
       if(!rec)return;
       if(kType==='y'){rec.y_status='未発行';}
       else if(kType==='s'){rec.s_status='未発行';}
