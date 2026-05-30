@@ -305,7 +305,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <!-- 期限/検査日 -->
       <div class="row-group">
         <label id="task-date-label">📅 期限日:</label>
-        <input type="date" id="task-date-input" style="flex:1;margin:0;">
+        <input type="datetime-local" id="task-date-input" style="flex:1;margin:0;">
       </div>
       <!-- 発行状況 (要領書/成績書のみ) -->
       <div class="row-group" id="task-status-row">
@@ -583,18 +583,18 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <div class="fg"><label>発行状況</label>
           <div class="cdl-wrap"><input type="text" id="kf-ystatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-ystatus','ystatus-cdl')" oninput="cdlShow('kf-ystatus','ystatus-cdl')"><div class="cdl-list" id="ystatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','発行済')">発行済</div></div></div>
         </div>
-        <div class="fg"><label>発行予定日</label><input type="date" id="kf-ybiko"></div>
+        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-ybiko"></div>
       </div>
       <div class="sec-label">検査成績書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
           <div class="cdl-wrap"><input type="text" id="kf-sstatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-sstatus','sstatus-cdl')" oninput="cdlShow('kf-sstatus','sstatus-cdl')"><div class="cdl-list" id="sstatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','特採発行待ち')">特採発行待ち</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','発行済')">発行済</div></div></div>
         </div>
-        <div class="fg"><label>発行予定日</label><input type="date" id="kf-sbiko"></div>
+        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-sbiko"></div>
       </div>
       <div class="sec-label">検査予定</div>
       <div class="form-grid">
-        <div class="fg"><label>検査日</label><input type="date" id="kf-kdate"></div>
+        <div class="fg"><label>検査日</label><input type="datetime-local" id="kf-kdate"></div>
         <div class="fg"><label>区分</label><div class="cdl-wrap"><input type="text" id="kf-kubun" placeholder="区分を選択または入力" autocomplete="off" onfocus="cdlShow('kf-kubun','kubun-cdl')" oninput="cdlShow('kf-kubun','kubun-cdl')"><div class="cdl-list" id="kubun-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','中間検査')">中間検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','完成検査')">完成検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','客先検査')">客先検査</div></div></div></div>
         <div class="fg"><label>検査場所</label><input id="kf-place"></div>
         <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
@@ -648,7 +648,7 @@ function showShowerEffect(wordSource,topWord){
 document.getElementById('praise-overlay').addEventListener('click',()=>{document.getElementById('praise-overlay').style.display='none';showerActive=false;});
 
 function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function fmtDate(s){if(!s)return '';let m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return `${m[1]}/${+m[2]}/${+m[3]}`;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);if(m)return `20${m[3]}/${+m[1]}/${+m[2]}`;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}/${+m[1]}/${+m[2]}`;return s;}
+function fmtDate(s){if(!s)return '';let m=s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);if(m)return `${m[1]}/${+m[2]}/${+m[3]} ${m[4]}:${m[5]}`;m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return `${m[1]}/${+m[2]}/${+m[3]}`;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/);if(m)return `20${m[3]}/${+m[1]}/${+m[2]}`;m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(m)return `${m[3]}/${+m[1]}/${+m[2]}`;return s;}
 
 function toast(msg,err=false){const el=document.createElement('div');el.className='toast'+(err?' err':'');el.textContent=msg;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3000);}
 
@@ -789,7 +789,7 @@ function renderTasks(){
     // 日付の緊急度
     let dateBadge='';
     if(t.date){
-      const _dp=t.date.split('-').map(Number),_tp=today.split('-').map(Number);const diff=Math.round((new Date(_dp[0],_dp[1]-1,_dp[2])-new Date(_tp[0],_tp[1]-1,_tp[2]))/86400000);
+      const _ds=t.date.slice(0,10);const _dp=_ds.split('-').map(Number),_tp=today.split('-').map(Number);const diff=Math.round((new Date(_dp[0],_dp[1]-1,_dp[2])-new Date(_tp[0],_tp[1]-1,_tp[2]))/86400000);
       if(diff<0) dateBadge=`<span style="color:#EF4444;font-size:10px;font-weight:bold;margin-left:4px;">⚠️ 期限超過</span>`;
       else if(diff===0) dateBadge=`<span style="color:#EF4444;font-size:10px;font-weight:bold;margin-left:4px;">🔥 今日</span>`;
       else if(diff<=3) dateBadge=`<span style="color:#F97316;font-size:10px;font-weight:bold;margin-left:4px;">⏰ あと${diff}日</span>`;
@@ -1040,15 +1040,31 @@ setInterval(()=>{
   if(isQuietTime())return;
   const _tn3=new Date();const today=`${_tn3.getFullYear()}-${String(_tn3.getMonth()+1).padStart(2,'0')}-${String(_tn3.getDate()).padStart(2,'0')}`;
   const allTasks=[...getKPendingTasks(),...taskList.filter(t=>!t.completedAt)];
+  const _now=new Date();const _nowMin=_now.getHours()*60+_now.getMinutes();
   allTasks.forEach(t=>{
     if(!t.date||!t.remindDaysBefore)return;
-    const _dp2=t.date.split('-').map(Number),_tp2=today.split('-').map(Number);const diff=Math.round((new Date(_dp2[0],_dp2[1]-1,_dp2[2])-new Date(_tp2[0],_tp2[1]-1,_tp2[2]))/86400000);
+    const hasTime=t.date.includes('T');
+    const dateOnly=t.date.slice(0,10);
+    const _dp2=dateOnly.split('-').map(Number),_tp2=today.split('-').map(Number);
+    const diff=Math.round((new Date(_dp2[0],_dp2[1]-1,_dp2[2])-new Date(_tp2[0],_tp2[1]-1,_tp2[2]))/86400000);
     if(diff<0||diff>t.remindDaysBefore)return;
-    const key=`remind_${t._kId||JSON.stringify({p:t.prno,c:t.category})}_${today}`;
+    // 時刻が設定されている場合：リマインド対象日の同時刻に発火
+    if(hasTime){
+      const taskTime=t.date.slice(11,16);const[th,tm]=taskTime.split(':').map(Number);
+      const triggerMin=th*60+tm;
+      // リマインド対象日（diff日前）かつ時刻が±2分以内
+      const reminderDate=new Date(_dp2[0],_dp2[1]-1,_dp2[2]);reminderDate.setDate(reminderDate.getDate()-diff);
+      const reminderDateStr=`${reminderDate.getFullYear()}-${String(reminderDate.getMonth()+1).padStart(2,'0')}-${String(reminderDate.getDate()).padStart(2,'0')}`;
+      if(reminderDateStr!==today)return;
+      if(Math.abs(_nowMin-triggerMin)>2)return;
+    }
+    const keyTime=hasTime?t.date.slice(11,16).replace(':',''):'any';
+    const key=`remind_${t._kId||JSON.stringify({p:t.prno,c:t.category})}_${today}_${keyTime}`;
     if(localStorage.getItem(key))return;
     const label=t.kiki||t.text||t.category||'タスク';
-    const msg=diff===0?`📅 今日が期限！「${label}」`:`📅 あと${diff}日「${label}」`;
-    const topWord=diff===0?`⚠️ 今日が期限！\n${label}`:`⏰ あと${diff}日\n${label}`;
+    const timeStr=hasTime?` ${t.date.slice(11,16)}`:'';
+    const msg=diff===0?`📅 今日${timeStr}が期限！「${label}」`:`📅 あと${diff}日${timeStr}「${label}」`;
+    const topWord=diff===0?`⚠️ 今日${timeStr}が期限！\n${label}`:`⏰ あと${diff}日\n${label}`;
     if(!document.hidden){playBeep();showShowerEffect(remindList.join(','),topWord);toast(msg);}
     if('Notification'in window&&Notification.permission==='granted') new Notification(msg,{body:`${t.category} / ${t.anken||''}`});
     try{localStorage.setItem(key,'1')}catch(e){}
