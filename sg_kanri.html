@@ -813,7 +813,7 @@ function renderTasks(){
     const stMap={'未着手':'#94A3B8','チェック中':'#3B82F6','未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981'};
     const stBadge=t.status?`<span style="font-size:10px;color:#fff;background:${stMap[t.status]||'#888'};border-radius:8px;padding:2px 8px;">${escH(t.status)}</span>`:'';
     const kubunBadge=t.kubun?`<span style="font-size:10px;color:#fff;background:#0EA5E9;border-radius:8px;padding:2px 8px;">${escH(t.kubun)}</span>`:'';
-    const revBadge=t.rev?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
+    const revBadge=(t.rev&&t.category!=='検査日')?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
 
     const mainInfo=`<div style="font-weight:bold;font-size:14px;margin:4px 0;">${escH(t.kiki||t.text||'')}</div>`;
     const subInfo=[t.prno?`PRNo: ${escH(t.prno)}`:'',t.vendor?`${escH(t.vendor)}`:''].filter(Boolean).join(' ／ ');
