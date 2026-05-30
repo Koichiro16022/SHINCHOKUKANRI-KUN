@@ -943,7 +943,7 @@ addBtn.addEventListener('click',()=>{
     editIndex=-1;addBtn.textContent='＋ タスクを追加';addBtn.classList.remove('edit-mode');
     saveData();
   } else {
-    const nr={id:kNextId++,anken,prno,kiki:kiki||biko,rev,vendor,y_status:cat==='要領書'?status:'',y_biko:cat==='要領書'?biko:'',s_status:cat==='成績書'?status:'',s_biko:cat==='成績書'?biko:'',kensa_date:date,kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',remindDaysBefore:remind};
+    const nr={id:kNextId++,anken,prno,kiki:kiki||biko,y_rev:cat==='要領書'?rev:'',s_rev:cat==='成績書'?rev:'',vendor,y_status:cat==='要領書'?status:'',y_date:cat==='要領書'?date:'',y_biko:'',s_status:cat==='成績書'?status:'',s_date:cat==='成績書'?date:'',s_biko:'',kensa_date:cat==='検査日'?date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',remindDaysBefore:remind};
     kRecords.push(nr);kSave();ensureAnkenColors();saveOshiData();populateAnkenDl();kPopulateAnken();kRenderDash();
   }
   ['task-cat-input','task-anken-input','task-prno-input','task-rev-input','task-kiki-input','task-vendor-input','task-date-input','task-biko-input'].forEach(id=>f(id).value='');
