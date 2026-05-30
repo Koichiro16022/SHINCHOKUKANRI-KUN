@@ -589,7 +589,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <div class="fg"><label>発行状況</label>
           <div class="cdl-wrap"><input type="text" id="kf-ystatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-ystatus','ystatus-cdl')" oninput="cdlShow('kf-ystatus','ystatus-cdl')"><div class="cdl-list" id="ystatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','発行済')">発行済</div></div></div>
         </div>
-        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-ybiko" oninput="dtlOnInput(this)"></div>
+        <div class="fg"><label>発行予定日</label><div style="display:flex;gap:6px;"><input type="date" id="kf-ybiko-d" style="flex:2;margin:0;"><input type="time" id="kf-ybiko-t" style="flex:1;margin:0;" placeholder="時刻(任意)"></div></div>
         <div class="fg"><label>Rev.</label><div class="cdl-wrap"><input type="text" id="kf-yrev" placeholder="例: O" autocomplete="off" onfocus="cdlShow('kf-yrev','yrev-cdl')" oninput="cdlShow('kf-yrev','yrev-cdl')"><div class="cdl-list" id="yrev-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','O')">O</div><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','A')">A</div><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','B')">B</div><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','C')">C</div></div></div></div>
       </div>
       <div class="sec-label">検査成績書</div>
@@ -597,12 +597,12 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <div class="fg"><label>発行状況</label>
           <div class="cdl-wrap"><input type="text" id="kf-sstatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-sstatus','sstatus-cdl')" oninput="cdlShow('kf-sstatus','sstatus-cdl')"><div class="cdl-list" id="sstatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','特採発行待ち')">特採発行待ち</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','発行済')">発行済</div></div></div>
         </div>
-        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-sbiko" oninput="dtlOnInput(this)"></div>
+        <div class="fg"><label>発行予定日</label><div style="display:flex;gap:6px;"><input type="date" id="kf-sbiko-d" style="flex:2;margin:0;"><input type="time" id="kf-sbiko-t" style="flex:1;margin:0;" placeholder="時刻(任意)"></div></div>
         <div class="fg"><label>Rev.</label><div class="cdl-wrap"><input type="text" id="kf-srev" placeholder="例: O" autocomplete="off" onfocus="cdlShow('kf-srev','srev-cdl')" oninput="cdlShow('kf-srev','srev-cdl')"><div class="cdl-list" id="srev-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','O')">O</div><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','A')">A</div><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','B')">B</div><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','C')">C</div></div></div></div>
       </div>
       <div class="sec-label">検査予定</div>
       <div class="form-grid">
-        <div class="fg"><label>検査日</label><input type="datetime-local" id="kf-kdate" oninput="dtlOnInput(this)"></div>
+        <div class="fg"><label>検査日</label><div style="display:flex;gap:6px;"><input type="date" id="kf-kdate-d" style="flex:2;margin:0;"><input type="time" id="kf-kdate-t" style="flex:1;margin:0;" placeholder="時刻(任意)"></div></div>
         <div class="fg"><label>区分</label><div class="cdl-wrap"><input type="text" id="kf-kubun" placeholder="区分を選択または入力" autocomplete="off" onfocus="cdlShow('kf-kubun','kubun-cdl')" oninput="cdlShow('kf-kubun','kubun-cdl')"><div class="cdl-list" id="kubun-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','中間検査')">中間検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','完成検査')">完成検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','客先検査')">客先検査</div></div></div></div>
         <div class="fg"><label>検査場所</label><input id="kf-place"></div>
         <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
@@ -1248,8 +1248,14 @@ function openKTab(name){
 }
 
 // モーダル
-function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-remind').value=0;document.getElementById('kf-remind').value=r.remindDaysBefore||0;dtlInitFields();document.getElementById('kOverlay').classList.add('open');}
-function toDTL(s){if(!s)return '';if(s.includes('T'))return s;return s+'T00:00';}function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-yrev').value=r.y_rev||r.rev||'';document.getElementById('kf-srev').value=r.s_rev||r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=toDTL(r.y_date||'');document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=toDTL(r.s_date||'');document.getElementById('kf-kdate').value=toDTL(r.kensa_date||'');document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-remind').value=r.remindDaysBefore||0;dtlInitFields();document.getElementById('kOverlay').classList.add('open');}
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-remind').value=0;document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
+function toDTL(s){if(!s)return '';if(s.includes('T'))return s;return s+'T00:00';}function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-yrev').value=r.y_rev||r.rev||'';document.getElementById('kf-srev').value=r.s_rev||r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';(function(){
+  function splitDT(s){if(!s)return['',''];var p=s.split('T');return[p[0],p[1]||''];}
+  var yd=splitDT(r.y_date||'');document.getElementById('kf-ybiko-d').value=yd[0];document.getElementById('kf-ybiko-t').value=yd[1];
+  document.getElementById('kf-sstatus').value=r.s_status||'';
+  var sd=splitDT(r.s_date||'');document.getElementById('kf-sbiko-d').value=sd[0];document.getElementById('kf-sbiko-t').value=sd[1];
+  var kd=splitDT(r.kensa_date||'');document.getElementById('kf-kdate-d').value=kd[0];document.getElementById('kf-kdate-t').value=kd[1];
+})();document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
 function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
 function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
 
@@ -1257,7 +1263,7 @@ function kSaveRecord(){
   const anken=document.getElementById('kf-anken').value.trim(),prno=document.getElementById('kf-prno').value.trim(),kiki=document.getElementById('kf-kiki').value.trim();
   if(!anken||!prno||!kiki){toast('案件名・PRNo・機器名称は必須です',true);return;}
   const prev=kEditId?kRecords.find(r=>r.id===kEditId):null;
-  const data={anken,prno,kiki,y_rev:document.getElementById('kf-yrev').value.trim(),s_rev:document.getElementById('kf-srev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_date:document.getElementById('kf-ybiko').value,y_biko:'',s_status:document.getElementById('kf-sstatus').value,s_date:document.getElementById('kf-sbiko').value,s_biko:'',kensa_date:document.getElementById('kf-kdate').value.trim(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value,remindDaysBefore:+document.getElementById('kf-remind').value||0};
+  const data={anken,prno,kiki,y_rev:document.getElementById('kf-yrev').value.trim(),s_rev:document.getElementById('kf-srev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_date:(function(){var d=document.getElementById('kf-ybiko-d').value,t=document.getElementById('kf-ybiko-t').value;return d?(t?d+'T'+t:d):'';})(),y_biko:'',s_status:document.getElementById('kf-sstatus').value,s_date:(function(){var d=document.getElementById('kf-sbiko-d').value,t=document.getElementById('kf-sbiko-t').value;return d?(t?d+'T'+t:d):'';})(),s_biko:'',kensa_date:(function(){var d=document.getElementById('kf-kdate-d').value,t=document.getElementById('kf-kdate-t').value;return d?(t?d+'T'+t:d):'';})(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value,remindDaysBefore:+document.getElementById('kf-remind').value||0};
   
   // 褒め演出: 新規発行済みになった場合
   const isNewYDone=data.y_status==='発行済'&&(!prev||prev.y_status!=='発行済');
@@ -1312,21 +1318,7 @@ function kImportFile(file){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // カスタムドロップダウン
-var _dtlWasEmpty={};
-function dtlOnInput(el){
-  if(_dtlWasEmpty[el.id]&&el.value){
-    var d=el.value.slice(0,10);
-    if(d.length===10){el.value=d+'T00:00';_dtlWasEmpty[el.id]=false;}
-  }
-}
-function dtlOnChange(el){/* no-op */}
-function dtlOnFocus(el){/* no-op */}
-function dtlInitFields(){
-  ['kf-ybiko','kf-sbiko','kf-kdate'].forEach(function(id){
-    var el=document.getElementById(id);
-    if(el) _dtlWasEmpty[id]=!el.value;
-  });
-}
+
 function cdlShow(inputId, listId){
   const inp=document.getElementById(inputId);
   const list=document.getElementById(listId);
