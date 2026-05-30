@@ -20,7 +20,7 @@ body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',Meiryo,sans-
 
 /* ── PANELS ── */
 .app-panel{display:none;max-width:1200px;margin:0 auto;padding:20px 16px;}
-.app-panel.active{display:block;padding-top:70px;}
+.app-panel.active{display:block;}
 
 /* ── 推し事管理: カード ── */
 .panel{background:var(--card);padding:20px;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,.05);margin-bottom:20px;width:100%;}
@@ -237,15 +237,21 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
   <button class="nav-btn" id="nav-kensa" onclick="switchPanel('kensa')">🔬 検査図書管理</button>
   <button class="nav-btn settings-btn" id="nav-settings" onclick="switchPanel('settings')">⚙️ 設定</button>
 </nav>
+<div id="search-bar-fixed" style="position:sticky;top:52px;z-index:99;background:var(--bg);padding:8px 16px;box-shadow:0 2px 6px rgba(0,0,0,.07);display:none;">
+  <div style="max-width:1200px;margin:0 auto;position:relative;">
+    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:15px;">🔍</span>
+    <input type="text" id="main-search" placeholder="PRNo・機器名・ベンダー名・案件名で検索..." style="padding-left:36px;margin:0;font-size:14px;width:100%;box-sizing:border-box;" oninput="renderTasks()">
+  </div>
+</div>
 
 <!-- ━━━━━━━━━━━━━━━ PANEL: 進捗管理くん (メイン) ━━━━━━━━━━━━━━━ -->
 <div class="app-panel active" id="panel-oshi">
 
-  <!-- 検索バー -->
-  <div id="search-bar-fixed" style="position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:1200px;padding:8px 16px;z-index:500;background:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.08);">
+  <!-- 検索バー（ダミー：高さ確保用） -->
+  <div style="height:0;">
     <div style="position:relative;">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:15px;">🔍</span>
-      <input type="text" id="main-search" placeholder="PRNo・機器名・ベンダー名・案件名で検索..." style="padding-left:36px;margin:0;font-size:14px;" oninput="renderTasks()">
+      <!-- main-search moved to fixed bar -->
     </div>
   </div>
 
@@ -655,7 +661,7 @@ function toast(msg,err=false){const el=document.createElement('div');el.classNam
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // PANEL NAVIGATION
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function switchPanel(name){
+function switchPanel(name){document.getElementById('search-bar-fixed').style.display=(name==='oshi')?'block':'none';
   ['oshi','kensa','settings'].forEach(p=>{
     document.getElementById('panel-'+p).classList.toggle('active',p===name);
     const btn=document.getElementById('nav-'+p);
@@ -1342,6 +1348,7 @@ window.addEventListener('load',()=>{
   populateAnkenDl();
 
   // タスクリスト描画（kRecords読み込み後）
+  document.getElementById('search-bar-fixed').style.display='block';
   renderTasks();
 
   const svq=localStorage.getItem('sg_quiet');if(svq){try{quietMode=JSON.parse(svq);}catch(e){}}
