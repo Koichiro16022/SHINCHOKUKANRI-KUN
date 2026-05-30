@@ -589,7 +589,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <div class="fg"><label>発行状況</label>
           <div class="cdl-wrap"><input type="text" id="kf-ystatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-ystatus','ystatus-cdl')" oninput="cdlShow('kf-ystatus','ystatus-cdl')"><div class="cdl-list" id="ystatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','発行済')">発行済</div></div></div>
         </div>
-        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-ybiko" onfocus="dtlOnFocus(this)" onchange="dtlOnChange(this)"></div>
+        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-ybiko" oninput="dtlOnInput(this)"></div>
         <div class="fg"><label>Rev.</label><div class="cdl-wrap"><input type="text" id="kf-yrev" placeholder="例: O" autocomplete="off" onfocus="cdlShow('kf-yrev','yrev-cdl')" oninput="cdlShow('kf-yrev','yrev-cdl')"><div class="cdl-list" id="yrev-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','O')">O</div><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','A')">A</div><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','B')">B</div><div class="cdl-item" onmousedown="cdlPick('kf-yrev','yrev-cdl','C')">C</div></div></div></div>
       </div>
       <div class="sec-label">検査成績書</div>
@@ -597,12 +597,12 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <div class="fg"><label>発行状況</label>
           <div class="cdl-wrap"><input type="text" id="kf-sstatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-sstatus','sstatus-cdl')" oninput="cdlShow('kf-sstatus','sstatus-cdl')"><div class="cdl-list" id="sstatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','特採発行待ち')">特採発行待ち</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','発行済')">発行済</div></div></div>
         </div>
-        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-sbiko" onfocus="dtlOnFocus(this)" onchange="dtlOnChange(this)"></div>
+        <div class="fg"><label>発行予定日</label><input type="datetime-local" id="kf-sbiko" oninput="dtlOnInput(this)"></div>
         <div class="fg"><label>Rev.</label><div class="cdl-wrap"><input type="text" id="kf-srev" placeholder="例: O" autocomplete="off" onfocus="cdlShow('kf-srev','srev-cdl')" oninput="cdlShow('kf-srev','srev-cdl')"><div class="cdl-list" id="srev-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','O')">O</div><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','A')">A</div><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','B')">B</div><div class="cdl-item" onmousedown="cdlPick('kf-srev','srev-cdl','C')">C</div></div></div></div>
       </div>
       <div class="sec-label">検査予定</div>
       <div class="form-grid">
-        <div class="fg"><label>検査日</label><input type="datetime-local" id="kf-kdate" onfocus="dtlOnFocus(this)" onchange="dtlOnChange(this)"></div>
+        <div class="fg"><label>検査日</label><input type="datetime-local" id="kf-kdate" oninput="dtlOnInput(this)"></div>
         <div class="fg"><label>区分</label><div class="cdl-wrap"><input type="text" id="kf-kubun" placeholder="区分を選択または入力" autocomplete="off" onfocus="cdlShow('kf-kubun','kubun-cdl')" oninput="cdlShow('kf-kubun','kubun-cdl')"><div class="cdl-list" id="kubun-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','中間検査')">中間検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','完成検査')">完成検査</div><div class="cdl-item" onmousedown="cdlPick('kf-kubun','kubun-cdl','客先検査')">客先検査</div></div></div></div>
         <div class="fg"><label>検査場所</label><input id="kf-place"></div>
         <div class="fg"><label>検査員</label><input id="kf-inspector"></div>
@@ -1312,20 +1312,19 @@ function kImportFile(file){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // カスタムドロップダウン
-function dtlOnChange(el){
-  const wasEmpty=!el._dtlHadVal;
-  setTimeout(function(){
-    if(wasEmpty&&el.value){
-      el.value=el.value.slice(0,10)+'T00:00';
-    }
-    el._dtlHadVal=!!el.value;
-  },100);
+var _dtlWasEmpty={};
+function dtlOnInput(el){
+  if(_dtlWasEmpty[el.id]&&el.value){
+    var d=el.value.slice(0,10);
+    if(d.length===10){el.value=d+'T00:00';_dtlWasEmpty[el.id]=false;}
+  }
 }
+function dtlOnChange(el){/* no-op */}
 function dtlOnFocus(el){/* no-op */}
 function dtlInitFields(){
   ['kf-ybiko','kf-sbiko','kf-kdate'].forEach(function(id){
     var el=document.getElementById(id);
-    if(el) el._dtlHadVal=!!el.value;
+    if(el) _dtlWasEmpty[id]=!el.value;
   });
 }
 function cdlShow(inputId, listId){
