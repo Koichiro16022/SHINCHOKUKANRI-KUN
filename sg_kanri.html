@@ -744,13 +744,13 @@ function saveData(){
 function getKPendingTasks(){
   const tasks=[];
   kRecords.forEach(r=>{
-    if(r.y_status!=='発行済'){
+    if(r.y_status!=='発行済'&&!r.y_hidden){
       tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.y_rev||r.rev||'',vendor:r.vendor||'',date:r.y_date||'',status:r.y_status||'未発行',biko:r.y_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
-    if(r.s_status!=='発行済'){
+    if(r.s_status!=='発行済'&&!r.s_hidden){
       tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.s_rev||r.rev||'',vendor:r.vendor||'',date:r.s_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
-    if(r.kensa_date&&!r.kensa_result){
+    if(r.kensa_date&&!r.kensa_result&&!r.k_hidden){
       tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',kubun:r.kensa_kubun||'',biko:r.kensa_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
   });
@@ -851,8 +851,7 @@ function renderTasks(){
   todoList.querySelectorAll('.delete-task-btn').forEach(b=>{
     b.addEventListener('click',()=>{
       if(b.dataset.kid){
-        if(!confirm('このレコードをマスターリストから削除しますか？'))return;
-        kDel(+b.dataset.kid,true);
+        kDelTask(+b.dataset.kid, b.dataset.ktype);
       } else {
         deleteManualTask(+b.dataset.midx);
       }
@@ -1280,6 +1279,16 @@ function kSaveRecord(){
   kCloseModal();kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();renderTasks();
 }
 function kDel(id,skipConfirm){if(!skipConfirm&&!confirm('削除しますか？'))return;kRecords=kRecords.filter(r=>r.id!==id);kSave();kRenderDash();kApplyFilters();kRenderSched();renderTasks();toast('🗑 削除しました');}
+function kDelTask(id,kType){
+  const labels={'yoryo':'要領書','seiseki':'成績書','kensabi':'検査日'};
+  if(!confirm(`「${labels[kType]||kType}」タスクを削除しますか？`))return;
+  const r=kRecords.find(x=>x.id===id);
+  if(!r)return;
+  if(kType==='yoryo')r.y_hidden=true;
+  else if(kType==='seiseki')r.s_hidden=true;
+  else if(kType==='kensabi')r.k_hidden=true;
+  kSave();renderTasks();toast('🗑 削除しました');
+}
 
 // CSV
 function kExportCSV(){
