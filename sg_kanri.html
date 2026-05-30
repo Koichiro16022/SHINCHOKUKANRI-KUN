@@ -1313,10 +1313,13 @@ function kImportFile(file){
 
 // カスタムドロップダウン
 function dtlOnChange(el){
-  if(el.dataset.hadValue!=='1'&&el.value){
-    el.value=el.value.slice(0,10)+'T00:00';
-  }
-  el.dataset.hadValue=el.value?'1':'';
+  const wasEmpty=el.dataset.hadValue!=='1';
+  setTimeout(function(){
+    if(wasEmpty&&el.value){
+      el.value=el.value.slice(0,10)+'T00:00';
+    }
+    el.dataset.hadValue=el.value?'1':'';
+  },50);
 }
 function dtlOnFocus(el){
   el.dataset.hadValue=el.value?'1':'';
