@@ -1048,7 +1048,8 @@ setInterval(()=>{
     if(localStorage.getItem(key))return;
     const label=t.kiki||t.text||t.category||'タスク';
     const msg=diff===0?`📅 今日が期限！「${label}」`:`📅 あと${diff}日「${label}」`;
-    if(!document.hidden){playBeep();toast(msg);}
+    const topWord=diff===0?`⚠️ 今日が期限！\n${label}`:`⏰ あと${diff}日\n${label}`;
+    if(!document.hidden){playBeep();showShowerEffect(remindList.join(','),topWord);toast(msg);}
     if('Notification'in window&&Notification.permission==='granted') new Notification(msg,{body:`${t.category} / ${t.anken||''}`});
     try{localStorage.setItem(key,'1')}catch(e){}
   });
