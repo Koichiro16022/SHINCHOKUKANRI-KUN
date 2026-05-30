@@ -749,7 +749,7 @@ function getKPendingTasks(){
       tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.s_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
     if(r.kensa_date&&!r.kensa_result){
-      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',biko:r.kensa_biko||'',remindDaysBefore:r.remindDaysBefore||0});
+      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',kubun:r.kensa_kubun||'',biko:r.kensa_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
   });
   return tasks;
@@ -812,6 +812,7 @@ function renderTasks(){
     // 発行状況バッジ
     const stMap={'未着手':'#94A3B8','チェック中':'#3B82F6','未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981'};
     const stBadge=t.status?`<span style="font-size:10px;color:#fff;background:${stMap[t.status]||'#888'};border-radius:8px;padding:2px 8px;">${escH(t.status)}</span>`:'';
+    const kubunBadge=t.kubun?`<span style="font-size:10px;color:#fff;background:#0EA5E9;border-radius:8px;padding:2px 8px;">${escH(t.kubun)}</span>`:'';
     const revBadge=t.rev?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
 
     const mainInfo=`<div style="font-weight:bold;font-size:14px;margin:4px 0;">${escH(t.kiki||t.text||'')}</div>`;
@@ -823,7 +824,7 @@ function renderTasks(){
       :`<div class="btn-group"><button class="complete-btn" data-midx="${t._manualIdx}">✅ 完了</button><button class="edit-task-btn" data-midx="${t._manualIdx}">修正</button><button class="delete-task-btn" data-midx="${t._manualIdx}">削除</button></div>`;
 
     li.innerHTML=`<div style="flex:1">
-      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:4px;">${ankenBadge}${catBadge}${revBadge}${stBadge}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-bottom:4px;">${ankenBadge}${catBadge}${kubunBadge}${revBadge}${stBadge}</div>
       ${mainInfo}
       ${subInfo?`<div style="font-size:12px;color:#888;">${subInfo}</div>`:''}
       <div style="font-size:12px;color:#aaa;margin-top:3px;display:flex;align-items:center;gap:4px;">${t.date?`📅 ${fmtDate(t.date)}`:''}${dateBadge}${t.remindDaysBefore>0?`<span style="font-size:10px;color:#888;margin-left:6px;">🔔 ${t.remindDaysBefore}日前</span>`:`<span style="font-size:10px;color:#ccc;margin-left:6px;">🔕</span>`}</div>
