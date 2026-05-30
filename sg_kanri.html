@@ -20,7 +20,7 @@ body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',Meiryo,sans-
 
 /* ── PANELS ── */
 .app-panel{display:none;max-width:1200px;margin:0 auto;padding:20px 16px;}
-.app-panel.active{display:block;}
+.app-panel.active{display:block;padding-top:70px;}
 
 /* ── 推し事管理: カード ── */
 .panel{background:var(--card);padding:20px;border-radius:15px;box-shadow:0 5px 15px rgba(0,0,0,.05);margin-bottom:20px;width:100%;}
@@ -242,7 +242,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
 <div class="app-panel active" id="panel-oshi">
 
   <!-- 検索バー -->
-  <div class="panel" style="padding:12px 16px;margin-bottom:10px;position:sticky;top:0;z-index:500;background:var(--card);">
+  <div id="search-bar-fixed" style="position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:1200px;padding:8px 16px;z-index:500;background:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.08);">
     <div style="position:relative;">
       <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#aaa;font-size:15px;">🔍</span>
       <input type="text" id="main-search" placeholder="PRNo・機器名・ベンダー名・案件名で検索..." style="padding-left:36px;margin:0;font-size:14px;" oninput="renderTasks()">
