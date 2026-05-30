@@ -581,14 +581,14 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="sec-label">検査要領書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
-          <div class="cdl-wrap"><input type="text" id="kf-ystatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-ystatus','ystatus-cdl')" oninput="cdlShow('kf-ystatus','ystatus-cdl')"><div class="cdl-list" id="ystatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','未発行')">未発行</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','発行済')">発行済</div></div></div>
+          <div class="cdl-wrap"><input type="text" id="kf-ystatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-ystatus','ystatus-cdl')" oninput="cdlShow('kf-ystatus','ystatus-cdl')"><div class="cdl-list" id="ystatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-ystatus','ystatus-cdl','発行済')">発行済</div></div></div>
         </div>
         <div class="fg"><label>発行予定日</label><input type="date" id="kf-ybiko"></div>
       </div>
       <div class="sec-label">検査成績書</div>
       <div class="form-grid">
         <div class="fg"><label>発行状況</label>
-          <div class="cdl-wrap"><input type="text" id="kf-sstatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-sstatus','sstatus-cdl')" oninput="cdlShow('kf-sstatus','sstatus-cdl')"><div class="cdl-list" id="sstatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','未発行')">未発行</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','特採発行待ち')">特採発行待ち</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','発行済')">発行済</div></div></div>
+          <div class="cdl-wrap"><input type="text" id="kf-sstatus" placeholder="未発行 / 回覧中 / 発行済…" autocomplete="off" onfocus="cdlShow('kf-sstatus','sstatus-cdl')" oninput="cdlShow('kf-sstatus','sstatus-cdl')"><div class="cdl-list" id="sstatus-cdl"><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','未着手')">未着手</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','チェック中')">チェック中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','回覧中')">回覧中</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','特採発行待ち')">特採発行待ち</div><div class="cdl-item" onmousedown="cdlPick('kf-sstatus','sstatus-cdl','発行済')">発行済</div></div></div>
         </div>
         <div class="fg"><label>発行予定日</label><input type="date" id="kf-sbiko"></div>
       </div>
@@ -800,7 +800,7 @@ function renderTasks(){
     const ankenBadge=t.anken?`<span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 8px;">${escH(t.anken)}</span>`:'';
 
     // 発行状況バッジ
-    const stMap={'未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981'};
+    const stMap={'未着手':'#94A3B8','チェック中':'#3B82F6','未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981'};
     const stBadge=t.status?`<span style="font-size:10px;color:#fff;background:${stMap[t.status]||'#888'};border-radius:8px;padding:2px 8px;">${escH(t.status)}</span>`:'';
     const revBadge=t.rev?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
 
