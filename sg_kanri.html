@@ -743,10 +743,10 @@ function getKPendingTasks(){
   const tasks=[];
   kRecords.forEach(r=>{
     if(r.y_status!=='発行済'){
-      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.y_date||r.kensa_date||'',status:r.y_status||'未発行',biko:r.y_biko||'',remindDaysBefore:r.remindDaysBefore||0});
+      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.y_date||'',status:r.y_status||'未発行',biko:r.y_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
     if(r.s_status!=='発行済'){
-      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.s_date||r.kensa_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.remindDaysBefore||0});
+      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.s_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.remindDaysBefore||0});
     }
     if(r.kensa_date&&!r.kensa_result){
       tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',biko:r.kensa_biko||'',remindDaysBefore:r.remindDaysBefore||0});
