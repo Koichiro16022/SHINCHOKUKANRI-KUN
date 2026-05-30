@@ -429,7 +429,8 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
               <th onclick="kSort('anken')" data-col="anken">案件名</th>
               <th onclick="kSort('prno')" data-col="prno">PRNo</th>
               <th onclick="kSort('kiki')" data-col="kiki">機器名称</th>
-              <th onclick="kSort('rev')" data-col="rev">Rev.</th>
+              <th onclick="kSort('y_rev')" data-col="y_rev">要Rev.</th>
+              <th onclick="kSort('s_rev')" data-col="s_rev">成Rev.</th>
               <th onclick="kSort('vendor')" data-col="vendor">ベンダー</th>
               <th onclick="kSort('y_status')" data-col="y_status">要領書</th>
               <th onclick="kSort('s_status')" data-col="s_status">成績書</th>
@@ -1195,7 +1196,8 @@ function kRenderTable(){
     <td>${ankenTag(r.anken)}</td>
     <td style="font-size:11px;font-weight:bold;white-space:nowrap;">${escH(r.prno)}</td>
     <td style="font-weight:bold;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r.kiki)}">${escH(r.kiki)}</td>
-    <td style="font-size:11px;color:var(--muted)">${escH(r.rev)}</td>
+    <td style="font-size:11px;color:var(--muted)">${escH(r.y_rev||r.rev||"")}</td>
+    <td style="font-size:11px;color:var(--muted)">${escH(r.s_rev||r.rev||"")}</td>
     <td style="font-size:11px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escH(r.vendor)}">${escH(r.vendor)}</td>
     <td>${yBadge(r.y_status)}</td>
     <td>${sBadge(r.s_status)}</td>
@@ -1228,7 +1230,7 @@ function kRenderSched(){
     const cls=isPast?'past':isToday?'today':'future';
     const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
     const dateDisp=m?`<div class="dd">${m[3]}</div><div class="ym">${m[1]}/${m[2]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
-    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">Rev.${escH(r.rev)}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(r.vendor)}</div><div class="sched-meta" style="margin-top:2px;">${r.kensa_kubun?'区分: '+escH(r.kensa_kubun)+' ':''}${r.kensa_place?'場所: '+escH(r.kensa_place)+' ':''}${r.kensa_inspector?'検査員: '+escH(r.kensa_inspector):''}</div></div><div>${rBadge(r.kensa_result)}</div><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button></div>`;
+    return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">${r.y_rev||r.rev?"要Rev."+escH(r.y_rev||r.rev||""):""}${(r.y_rev||r.rev)&&(r.s_rev||r.rev)?" / ":""}${r.s_rev||r.rev?"成Rev."+escH(r.s_rev||r.rev||""):""}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(r.vendor)}</div><div class="sched-meta" style="margin-top:2px;">${r.kensa_kubun?'区分: '+escH(r.kensa_kubun)+' ':''}${r.kensa_place?'場所: '+escH(r.kensa_place)+' ':''}${r.kensa_inspector?'検査員: '+escH(r.kensa_inspector):''}</div></div><div>${rBadge(r.kensa_result)}</div><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button></div>`;
   }).join('');
 }
 
@@ -1277,8 +1279,8 @@ function kDel(id,skipConfirm){if(!skipConfirm&&!confirm('削除しますか？')
 // CSV
 function kExportCSV(){
   const rows=kFiltered.length?kFiltered:kRecords;
-  const hdrs=['案件名','PRNo','機器名称','Rev.','ベンダー名','要領書状況','要領書備考','成績書状況','成績書備考','検査日','区分','検査場所','検査員','検査結果'];
-  const csv=[hdrs,...rows.map(r=>[r.anken,r.prno,r.kiki,r.rev,r.vendor,r.y_status,r.y_biko,r.s_status,r.s_biko,r.kensa_date,r.kensa_kubun,r.kensa_place,r.kensa_inspector,r.kensa_result])].map(row=>row.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const hdrs=['案件名','PRNo','機器名称','要領書Rev.','成績書Rev.','ベンダー名','要領書状況','要領書備考','成績書状況','成績書備考','検査日','区分','検査場所','検査員','検査結果'];
+  const csv=[hdrs,...rows.map(r=>[r.anken,r.prno,r.kiki,r.y_rev||r.rev||"",r.s_rev||r.rev||"",r.vendor,r.y_status,r.y_biko,r.s_status,r.s_biko,r.kensa_date,r.kensa_kubun,r.kensa_place,r.kensa_inspector,r.kensa_result])].map(row=>row.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download=`検査管理_${KTODAY}.csv`;a.click();toast('📥 CSVを出力しました');
 }
 
