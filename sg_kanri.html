@@ -1248,8 +1248,8 @@ function openKTab(name){
 }
 
 // モーダル
-function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-remind').value=0;document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
-function toDTL(s){if(!s)return '';if(s.includes('T'))return s;return s+'T00:00';}function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-yrev').value=r.y_rev||r.rev||'';document.getElementById('kf-srev').value=r.s_rev||r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=toDTL(r.y_date||'');document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=toDTL(r.s_date||'');document.getElementById('kf-kdate').value=toDTL(r.kensa_date||'');document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-remind').value=0;document.getElementById('kf-remind').value=r.remindDaysBefore||0;dtlInitFields();document.getElementById('kOverlay').classList.add('open');}
+function toDTL(s){if(!s)return '';if(s.includes('T'))return s;return s+'T00:00';}function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-yrev').value=r.y_rev||r.rev||'';document.getElementById('kf-srev').value=r.s_rev||r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=toDTL(r.y_date||'');document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=toDTL(r.s_date||'');document.getElementById('kf-kdate').value=toDTL(r.kensa_date||'');document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-remind').value=r.remindDaysBefore||0;dtlInitFields();document.getElementById('kOverlay').classList.add('open');}
 function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
 function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
 
@@ -1313,16 +1313,20 @@ function kImportFile(file){
 
 // カスタムドロップダウン
 function dtlOnChange(el){
-  const wasEmpty=el.dataset.hadValue!=='1';
+  const wasEmpty=!el._dtlHadVal;
   setTimeout(function(){
     if(wasEmpty&&el.value){
       el.value=el.value.slice(0,10)+'T00:00';
     }
-    el.dataset.hadValue=el.value?'1':'';
-  },50);
+    el._dtlHadVal=!!el.value;
+  },100);
 }
-function dtlOnFocus(el){
-  el.dataset.hadValue=el.value?'1':'';
+function dtlOnFocus(el){/* no-op */}
+function dtlInitFields(){
+  ['kf-ybiko','kf-sbiko','kf-kdate'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el._dtlHadVal=!!el.value;
+  });
 }
 function cdlShow(inputId, listId){
   const inp=document.getElementById(inputId);
