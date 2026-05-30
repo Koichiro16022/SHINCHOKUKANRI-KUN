@@ -1287,6 +1287,9 @@ function kDelTask(id,kType){
   if(kType==='yoryo')r.y_hidden=true;
   else if(kType==='seiseki')r.s_hidden=true;
   else if(kType==='kensabi')r.k_hidden=true;
+  // 3つ全て非表示になったらマスターリストからも削除
+  const allHidden=r.y_hidden&&r.s_hidden&&r.k_hidden;
+  if(allHidden){kRecords=kRecords.filter(x=>x.id!==id);kRenderDash();kApplyFilters();kRenderSched();}
   kSave();renderTasks();toast('🗑 削除しました');
 }
 
