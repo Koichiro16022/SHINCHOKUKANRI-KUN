@@ -602,6 +602,10 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
           <select id="kf-result"><option value="">（未実施）</option><option value="合格">合格</option><option value="不合格">不合格</option><option value="保留">保留</option></select>
         </div>
       </div>
+      <div class="sec-label">リマインド設定</div>
+      <div class="form-grid">
+        <div class="fg"><label>🔔 リマインド（日前）</label><input type="number" id="kf-remind" min="0" max="30" value="0" placeholder="0=なし"></div>
+      </div>
     </div>
     <div class="k-modal-ft">
       <button class="kbtn kbtn-outline" onclick="kCloseModal()">キャンセル</button>
@@ -1217,8 +1221,8 @@ function openKTab(name){
 }
 
 // モーダル
-function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kOverlay').classList.add('open');}
-function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-rev').value=r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=r.y_date||'';document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=r.s_date||'';document.getElementById('kf-kdate').value=r.kensa_date||'';document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kOverlay').classList.add('open');}
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-remind').value=0;document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
+function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-rev').value=r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';document.getElementById('kf-ybiko').value=r.y_date||'';document.getElementById('kf-sstatus').value=r.s_status||'';document.getElementById('kf-sbiko').value=r.s_date||'';document.getElementById('kf-kdate').value=r.kensa_date||'';document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
 function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
 function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
 
@@ -1226,7 +1230,7 @@ function kSaveRecord(){
   const anken=document.getElementById('kf-anken').value.trim(),prno=document.getElementById('kf-prno').value.trim(),kiki=document.getElementById('kf-kiki').value.trim();
   if(!anken||!prno||!kiki){toast('案件名・PRNo・機器名称は必須です',true);return;}
   const prev=kEditId?kRecords.find(r=>r.id===kEditId):null;
-  const data={anken,prno,kiki,rev:document.getElementById('kf-rev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_date:document.getElementById('kf-ybiko').value,y_biko:'',s_status:document.getElementById('kf-sstatus').value,s_date:document.getElementById('kf-sbiko').value,s_biko:'',kensa_date:document.getElementById('kf-kdate').value.trim(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value};
+  const data={anken,prno,kiki,rev:document.getElementById('kf-rev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_date:document.getElementById('kf-ybiko').value,y_biko:'',s_status:document.getElementById('kf-sstatus').value,s_date:document.getElementById('kf-sbiko').value,s_biko:'',kensa_date:document.getElementById('kf-kdate').value.trim(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value,remindDaysBefore:+document.getElementById('kf-remind').value||0};
   
   // 褒め演出: 新規発行済みになった場合
   const isNewYDone=data.y_status==='発行済'&&(!prev||prev.y_status!=='発行済');
