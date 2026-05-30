@@ -822,7 +822,7 @@ function renderTasks(){
     const bikoInfo=t.biko?`<div style="font-size:11px;color:#aaa;margin-top:2px;">📝 ${escH(t.biko)}</div>`:'';
 
     const btnHtml=t._isK
-      ?`<div class="btn-group"><button class="complete-btn" data-kid="${t._kId}" data-ktype="${t._kType}">✅ 完了</button><button class="edit-task-btn" data-kid="${t._kId}">編集</button><button class="delete-task-btn" data-kid="${t._kId}">削除</button></div>`
+      ?`<div class="btn-group"><button class="complete-btn" data-kid="${t._kId}" data-ktype="${t._kType}">✅ 完了</button><button class="edit-task-btn" data-kid="${t._kId}">編集</button><button class="delete-task-btn" data-kid="${t._kId}" data-ktype="${t._kType}">削除</button></div>`
       :`<div class="btn-group"><button class="complete-btn" data-midx="${t._manualIdx}">✅ 完了</button><button class="edit-task-btn" data-midx="${t._manualIdx}">修正</button><button class="delete-task-btn" data-midx="${t._manualIdx}">削除</button></div>`;
 
     li.innerHTML=`<div style="flex:1">
