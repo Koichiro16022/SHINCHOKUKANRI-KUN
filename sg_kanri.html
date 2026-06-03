@@ -1265,7 +1265,7 @@ function openKTab(name){
     else{b.style.background='transparent';b.style.color='#888';}
   });
   if(name==='list')kApplyFilters();
-  if(name==='sched')kRenderSched();
+  if(name==='sched'){document.getElementById('kSchedAnken').value='';document.getElementById('kSchedPeriod').value='future';kRenderSched();}
 }
 
 // モーダル
