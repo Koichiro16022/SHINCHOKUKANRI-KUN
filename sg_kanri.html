@@ -488,7 +488,20 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
     <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
       <label style="font-weight:bold;font-size:14px;">💾 自動バックアップ設定</label>
       <div style="margin-top:8px;font-size:12px;color:#888;">起動時・保存時に指定フォルダへ日付別JSONを自動保存します（例: 20260603.json）</div>
-      <button onclick="selectBackupDir()" style="margin-top:10px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;">📁 バックアップフォルダを選択</button>
+      <button onclick="(async function(){
+  try{
+    if(!window.showDirectoryPicker){alert('showDirectoryPicker非対応');return;}
+    alert('フォルダ選択を開きます...');
+    const h=await window.showDirectoryPicker({mode:'readwrite'});
+    alert('選択されたフォルダ: '+h.name);
+    window._backupDirHandle=h;
+    const st=document.getElementById('backup-dir-status');
+    if(st)st.textContent='✅ '+h.name;
+    autoBackup();
+  }catch(e){
+    if(e.name!=='AbortError')alert('エラー: '+e.name+' / '+e.message);
+  }
+})()" style="margin-top:10px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;">📁 バックアップフォルダを選択</button>
       <span id="backup-dir-status" style="font-size:12px;color:#10B981;margin-left:10px;"></span>
     </div>
     <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
