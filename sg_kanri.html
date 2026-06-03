@@ -1352,7 +1352,7 @@ function kImportFile(file){
 
 
 // ── 自動バックアップ (File System Access API + IndexedDB) ─────────────
-let _backupDirHandle=null;
+window._backupDirHandle=null;
 window._bkGetIDB=function(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open('sg_backup_v1',1);
@@ -1384,7 +1384,7 @@ window.selectBackupDir=async function(){
   }
   try{
     const handle=await window.showDirectoryPicker({mode:'readwrite'});
-    _backupDirHandle=handle;
+    window._backupDirHandle=handle;
     await _bkSaveHandle(handle);
     const st=document.getElementById('backup-dir-status');
     if(st)st.textContent='✅ 設定済み：'+handle.name;
@@ -1397,9 +1397,9 @@ window.selectBackupDir=async function(){
   }
 }
 window.autoBackup=async function(){
-  if(!_backupDirHandle)return;
+  if(!window._backupDirHandle)return;
   try{
-    const perm=await _backupDirHandle.requestPermission({mode:'readwrite'});
+    const perm=await window._backupDirHandle.requestPermission({mode:'readwrite'});
     if(perm!=='granted')return;
     const now=new Date();
     const ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
@@ -1412,7 +1412,7 @@ window.autoBackup=async function(){
       sg_hkd:localStorage.getItem('sg_hkd'),
       savedAt:new Date().toISOString()
     };
-    const fh=await _backupDirHandle.getFileHandle(`${ds}.json`,{create:true});
+    const fh=await window._backupDirHandle.getFileHandle(`${ds}.json`,{create:true});
     const wr=await fh.createWritable();
     await wr.write(JSON.stringify(data,null,2));
     await wr.close();
@@ -1422,7 +1422,7 @@ window.initBackup=async function(){
   try{
     const handle=await _bkLoadHandle();
     if(!handle)return;
-    _backupDirHandle=handle;
+    window._backupDirHandle=handle;
     const perm=await handle.queryPermission({mode:'readwrite'});
     if(perm==='granted'){
       const st=document.getElementById('backup-dir-status');
