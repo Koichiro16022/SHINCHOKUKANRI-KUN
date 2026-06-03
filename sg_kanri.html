@@ -524,7 +524,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       </div>
       <div id="oshi-list" style="margin-top:10px;"></div>
     </div>
-    <label style="font-weight:bold;font-size:14px;">📸 画像コレクション<span style="font-weight:normal;font-size:12px;color:#999;">（完了時に表示・10枚まで）</span></label>
+    <label style="font-weight:bold;font-size:14px;">📸 画像コレクション<span style="font-weight:normal;font-size:12px;color:#999;">（完了時に表示・15枚まで）</span></label>
     <input type="file" accept="image/*" id="file-input" multiple style="margin-top:10px;">
     <div id="img-loading">📷 処理中...</div>
     <div id="collection-container"></div>
@@ -1121,7 +1121,7 @@ function deleteImage(i){if(!confirm('削除？'))return;imageCollection.splice(i
 function resetImages(){if(!confirm('画像をすべて削除？'))return;imageCollection=[];imageQueue=[];try{localStorage.setItem('sg_imgqueue','[]')}catch(e){}saveData();renderCollection();}
 fileInput.addEventListener('change',e=>{
   const files=Array.from(e.target.files||[]);if(!files.length)return;
-  const MAX=10;if(imageCollection.length>=MAX){alert(`最大${MAX}枚`);fileInput.value='';return;}
+  const MAX=15;if(imageCollection.length>=MAX){alert(`最大${MAX}枚`);fileInput.value='';return;}
   imgLoading.style.display='block';let done=0;
   files.forEach(f=>{if(!f.type.startsWith('image/')){done++;if(done===files.length)imgLoading.style.display='none';return;}
     const u=URL.createObjectURL(f),img=new Image();
