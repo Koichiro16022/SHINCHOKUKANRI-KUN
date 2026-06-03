@@ -1167,7 +1167,7 @@ function kPopulateAnken(){
 }
 
 function kRenderDash(){
-  const total=kRecords.length,yDone=kRecords.filter(r=>r.y_status==='発行済').length,yPend=kRecords.filter(r=>r.y_status!=='発行済').length,sDone=kRecords.filter(r=>r.s_status==='発行済').length,sPend=kRecords.filter(r=>r.s_status!=='発行済').length;
+  const total=kRecords.length,yDone=kRecords.filter(r=>r.y_status==='発行済').length,yPend=kRecords.filter(r=>r.y_status!=='発行済').length,sDone=kRecords.filter(r=>r.s_status==='発行済').length,sPend=kRecords.filter(r=>r.s_status!=='発行済'&&!r.s_hidden).length;
   document.getElementById('kStatsGrid').innerHTML=`
     <div class="k-stat c1"><div class="k-stat-icon">📋</div><div><div class="k-stat-num">${total}</div><div class="k-stat-label">総レコード数</div></div></div>
     <div class="k-stat c4"><div class="k-stat-icon">⚠️</div><div><div class="k-stat-num">${yPend}</div><div class="k-stat-label">要領書 未発行</div></div></div>
@@ -1177,7 +1177,7 @@ function kRenderDash(){
   const upc=kRecords.filter(r=>r.kensa_date&&r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30)).sort((a,b)=>a.kensa_date.localeCompare(b.kensa_date)).slice(0,8);
   const ul=document.getElementById('kUpcomingList');
   ul.innerHTML=upc.length?upc.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;"><span style="background:#EEF0FF;color:var(--blue);padding:3px 9px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${fmtDate(r.kensa_date)}</span><span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><span style="font-size:11px;color:var(--muted)">${escH(r.anken)}</span></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">直近30日の検査はありません</p>';
-  const pendRecs=kRecords.filter(r=>r.y_status==='発行済'&&r.s_status!=='発行済').sort((a,b)=>(a.anken||'').localeCompare(b.anken||''));
+  const pendRecs=kRecords.filter(r=>r.y_status==='発行済'&&r.s_status!=='発行済'&&!r.s_hidden).sort((a,b)=>(a.anken||'').localeCompare(b.anken||''));
   const pl=document.getElementById('kPendingList');
   pl.innerHTML=pendRecs.length?pendRecs.map(r=>`<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:6px;box-shadow:0 2px 5px rgba(0,0,0,.05);display:flex;align-items:center;gap:8px;">${ankenTag(r.anken)}<span style="flex:1;font-size:12px;font-weight:bold;">${escH(r.kiki)}</span><button class="kbtn kbtn-primary kbtn-sm" onclick="kOpenEdit(${r.id})">編集</button></div>`).join(''):'<p style="color:var(--muted);font-size:12px;">すべて発行済みです 🎉</p>';
 }
