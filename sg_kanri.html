@@ -1170,8 +1170,8 @@ function kRenderDash(){
   const total=kRecords.length,yDone=kRecords.filter(r=>r.y_status==='発行済').length,yPend=kRecords.filter(r=>r.y_status!=='発行済').length,sDone=kRecords.filter(r=>r.s_status==='発行済').length,sPend=kRecords.filter(r=>r.s_status!=='発行済').length;
   document.getElementById('kStatsGrid').innerHTML=`
     <div class="k-stat c1"><div class="k-stat-icon">📋</div><div><div class="k-stat-num">${total}</div><div class="k-stat-label">総レコード数</div></div></div>
-    <div class="k-stat c2"><div class="k-stat-icon">📄</div><div><div class="k-stat-num">${yDone}</div><div class="k-stat-label">要領書 発行済</div></div></div>
     <div class="k-stat c4"><div class="k-stat-icon">⚠️</div><div><div class="k-stat-num">${yPend}</div><div class="k-stat-label">要領書 未発行</div></div></div>
+    <div class="k-stat c2"><div class="k-stat-icon">📄</div><div><div class="k-stat-num">${yDone}</div><div class="k-stat-label">要領書 発行済</div></div></div>
     <div class="k-stat c4"><div class="k-stat-icon">⚠️</div><div><div class="k-stat-num">${sPend}</div><div class="k-stat-label">成績書 未発行</div></div></div>
     <div class="k-stat c2"><div class="k-stat-icon">✅</div><div><div class="k-stat-num">${sDone}</div><div class="k-stat-label">成績書 発行済</div></div></div>`;
   const upc=kRecords.filter(r=>r.kensa_date&&r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date>=KTODAY&&r.kensa_date<=kAddDays(KTODAY,30)).sort((a,b)=>a.kensa_date.localeCompare(b.kensa_date)).slice(0,8);
