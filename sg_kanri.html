@@ -1353,7 +1353,7 @@ function kImportFile(file){
 
 // ── 自動バックアップ (File System Access API + IndexedDB) ─────────────
 let _backupDirHandle=null;
-function _bkGetIDB(){
+window._bkGetIDB=function(){
   return new Promise((resolve,reject)=>{
     const req=indexedDB.open('sg_backup_v1',1);
     req.onupgradeneeded=e=>e.target.result.createObjectStore('h');
@@ -1361,7 +1361,7 @@ function _bkGetIDB(){
     req.onerror=reject;
   });
 }
-async function _bkSaveHandle(handle){
+window._bkSaveHandle=async function(handle){
   const db=await _bkGetIDB();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction('h','readwrite');
@@ -1369,7 +1369,7 @@ async function _bkSaveHandle(handle){
     tx.oncomplete=resolve;tx.onerror=reject;
   });
 }
-async function _bkLoadHandle(){
+window._bkLoadHandle=async function(){
   const db=await _bkGetIDB();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction('h','readonly');
@@ -1378,7 +1378,7 @@ async function _bkLoadHandle(){
     req.onerror=reject;
   });
 }
-async function selectBackupDir(){
+window.selectBackupDir=async function(){
   if(!window.showDirectoryPicker){
     alert('このブラウザはFile System APIに対応していません。\nEdge/Chrome最新版でお試しください。');return;
   }
@@ -1396,7 +1396,7 @@ async function selectBackupDir(){
     }
   }
 }
-async function autoBackup(){
+window.autoBackup=async function(){
   if(!_backupDirHandle)return;
   try{
     const perm=await _backupDirHandle.requestPermission({mode:'readwrite'});
@@ -1418,7 +1418,7 @@ async function autoBackup(){
     await wr.close();
   }catch(e){console.warn('Backup error:',e);}
 }
-async function initBackup(){
+window.initBackup=async function(){
   try{
     const handle=await _bkLoadHandle();
     if(!handle)return;
@@ -1450,7 +1450,7 @@ document.addEventListener('click', function(e){
     if(!l.previousElementSibling||!l.previousElementSibling.contains(e.target)) l.classList.remove('open');
   });
 });
-window.addEventListener('load',()=>{initBackup();initBackup();
+window.addEventListener('load',()=>{if(window.initBackup)window.initBackup();initBackup();
   canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
 
