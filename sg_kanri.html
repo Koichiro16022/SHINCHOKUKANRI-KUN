@@ -1366,7 +1366,9 @@ async function _bkLoadHandle(){
   });
 }
 async function selectBackupDir(){
-  if(!window.showDirectoryPicker){toast('このブラウザはFile System APIに対応していません',true);return;}
+  if(!window.showDirectoryPicker){
+    alert('このブラウザはFile System APIに対応していません。\nEdge/Chrome最新版でお試しください。');return;
+  }
   try{
     const handle=await window.showDirectoryPicker({mode:'readwrite'});
     _backupDirHandle=handle;
@@ -1375,7 +1377,11 @@ async function selectBackupDir(){
     if(st)st.textContent='✅ 設定済み：'+handle.name;
     toast('✅ バックアップフォルダを設定しました');
     autoBackup();
-  }catch(e){if(e.name!=='AbortError')toast('フォルダ選択に失敗しました',true);}
+  }catch(e){
+    if(e.name!=='AbortError'){
+      alert('フォルダ選択エラー: '+e.name+'\n'+e.message);
+    }
+  }
 }
 async function autoBackup(){
   if(!_backupDirHandle)return;
@@ -1431,7 +1437,7 @@ document.addEventListener('click', function(e){
     if(!l.previousElementSibling||!l.previousElementSibling.contains(e.target)) l.classList.remove('open');
   });
 });
-window.addEventListener('load',async()=>{initBackup();initBackup();
+window.addEventListener('load',()=>{initBackup();initBackup();
   canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
 
