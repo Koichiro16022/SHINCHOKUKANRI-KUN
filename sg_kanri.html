@@ -631,7 +631,9 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       </div>
       <div class="sec-label">リマインド設定</div>
       <div class="form-grid">
-        <div class="fg"><label>🔔 リマインド（日前）</label><input type="number" id="kf-remind" min="0" max="30" value="0" placeholder="0=なし"></div>
+        <div class="fg"><label>🔔 要領書リマインド（日前）</label><input type="number" id="kf-yremind" min="0" max="30" value="0" placeholder="0=なし"></div>
+        <div class="fg"><label>🔔 成績書リマインド（日前）</label><input type="number" id="kf-sremind" min="0" max="30" value="0" placeholder="0=なし"></div>
+        <div class="fg"><label>🔔 検査日リマインド（日前）</label><input type="number" id="kf-kremind" min="0" max="30" value="0" placeholder="0=なし"></div>
       </div>
     </div>
     <div class="k-modal-ft">
@@ -764,13 +766,13 @@ function getKPendingTasks(){
   const tasks=[];
   kRecords.forEach(r=>{
     if(r.y_status!=='発行済'&&!r.y_hidden){
-      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.y_rev||r.rev||'',vendor:r.vendor||'',date:r.y_date||'',status:r.y_status||'未発行',biko:r.y_biko||'',remindDaysBefore:r.remindDaysBefore||0});
+      tasks.push({_isK:true,_kId:r.id,_kType:'yoryo',category:'要領書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.y_rev||r.rev||'',vendor:r.vendor||'',date:r.y_date||'',status:r.y_status||'未発行',biko:r.y_biko||'',remindDaysBefore:r.y_remind!==undefined?r.y_remind:(r.remindDaysBefore||0)});
     }
     if(r.s_status!=='発行済'&&!r.s_hidden){
-      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.s_rev||r.rev||'',vendor:r.vendor||'',date:r.s_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.remindDaysBefore||0});
+      tasks.push({_isK:true,_kId:r.id,_kType:'seiseki',category:'成績書',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.s_rev||r.rev||'',vendor:r.vendor||'',date:r.s_date||'',status:r.s_status||'未発行',biko:r.s_biko||'',remindDaysBefore:r.s_remind!==undefined?r.s_remind:(r.remindDaysBefore||0)});
     }
     if(r.kensa_date&&!r.kensa_result&&!r.k_hidden){
-      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',kubun:r.kensa_kubun||'',biko:r.kensa_biko||'',remindDaysBefore:r.remindDaysBefore||0});
+      tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:r.kensa_date,status:'',kubun:r.kensa_kubun||'',biko:r.kensa_biko||'',remindDaysBefore:r.k_remind!==undefined?r.k_remind:(r.remindDaysBefore||0)});
     }
   });
   return tasks;
@@ -1266,14 +1268,14 @@ function openKTab(name){
 }
 
 // モーダル
-function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-remind').value=0;document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-yremind').value=r.y_remind!==undefined?r.y_remind:(r.remindDaysBefore||0);document.getElementById('kf-sremind').value=r.s_remind!==undefined?r.s_remind:(r.remindDaysBefore||0);document.getElementById('kf-kremind').value=r.k_remind!==undefined?r.k_remind:(r.remindDaysBefore||0);document.getElementById('kOverlay').classList.add('open');}
 function toDTL(s){if(!s)return '';if(s.includes('T'))return s;return s+'T00:00';}function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-yrev').value=r.y_rev||r.rev||'';document.getElementById('kf-srev').value=r.s_rev||r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';(function(){
   function splitDT(s){if(!s)return['',''];var p=s.split('T');return[p[0],p[1]||''];}
   var yd=splitDT(r.y_date||'');document.getElementById('kf-ybiko-d').value=yd[0];document.getElementById('kf-ybiko-t').value=yd[1];
   document.getElementById('kf-sstatus').value=r.s_status||'';
   var sd=splitDT(r.s_date||'');document.getElementById('kf-sbiko-d').value=sd[0];document.getElementById('kf-sbiko-t').value=sd[1];
   var kd=splitDT(r.kensa_date||'');document.getElementById('kf-kdate-d').value=kd[0];document.getElementById('kf-kdate-t').value=kd[1];
-})();document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-remind').value=r.remindDaysBefore||0;document.getElementById('kOverlay').classList.add('open');}
+})();document.getElementById('kf-kubun').value=r.kensa_kubun||'';document.getElementById('kf-place').value=r.kensa_place||'';document.getElementById('kf-inspector').value=r.kensa_inspector||'';document.getElementById('kf-result').value=r.kensa_result||'';document.getElementById('kf-yremind').value=r.y_remind!==undefined?r.y_remind:(r.remindDaysBefore||0);document.getElementById('kf-sremind').value=r.s_remind!==undefined?r.s_remind:(r.remindDaysBefore||0);document.getElementById('kf-kremind').value=r.k_remind!==undefined?r.k_remind:(r.remindDaysBefore||0);document.getElementById('kOverlay').classList.add('open');}
 function kCloseModal(){document.getElementById('kOverlay').classList.remove('open');}
 function kBgClose(e){if(e.target.id==='kOverlay')kCloseModal();}
 
@@ -1281,7 +1283,7 @@ function kSaveRecord(){
   const anken=document.getElementById('kf-anken').value.trim(),prno=document.getElementById('kf-prno').value.trim(),kiki=document.getElementById('kf-kiki').value.trim();
   if(!anken||!prno||!kiki){toast('案件名・PRNo・機器名称は必須です',true);return;}
   const prev=kEditId?kRecords.find(r=>r.id===kEditId):null;
-  const data={anken,prno,kiki,y_rev:document.getElementById('kf-yrev').value.trim(),s_rev:document.getElementById('kf-srev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_date:(function(){var d=document.getElementById('kf-ybiko-d').value,t=document.getElementById('kf-ybiko-t').value;return d?(t?d+'T'+t:d):'';})(),y_biko:'',s_status:document.getElementById('kf-sstatus').value,s_date:(function(){var d=document.getElementById('kf-sbiko-d').value,t=document.getElementById('kf-sbiko-t').value;return d?(t?d+'T'+t:d):'';})(),s_biko:'',kensa_date:(function(){var d=document.getElementById('kf-kdate-d').value,t=document.getElementById('kf-kdate-t').value;return d?(t?d+'T'+t:d):'';})(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value,remindDaysBefore:+document.getElementById('kf-remind').value||0};
+  const data={anken,prno,kiki,y_rev:document.getElementById('kf-yrev').value.trim(),s_rev:document.getElementById('kf-srev').value.trim(),vendor:document.getElementById('kf-vendor').value.trim(),y_status:document.getElementById('kf-ystatus').value,y_date:(function(){var d=document.getElementById('kf-ybiko-d').value,t=document.getElementById('kf-ybiko-t').value;return d?(t?d+'T'+t:d):'';})(),y_biko:'',s_status:document.getElementById('kf-sstatus').value,s_date:(function(){var d=document.getElementById('kf-sbiko-d').value,t=document.getElementById('kf-sbiko-t').value;return d?(t?d+'T'+t:d):'';})(),s_biko:'',kensa_date:(function(){var d=document.getElementById('kf-kdate-d').value,t=document.getElementById('kf-kdate-t').value;return d?(t?d+'T'+t:d):'';})(),kensa_kubun:document.getElementById('kf-kubun').value,kensa_place:document.getElementById('kf-place').value.trim(),kensa_inspector:document.getElementById('kf-inspector').value.trim(),kensa_result:document.getElementById('kf-result').value,y_remind:+document.getElementById('kf-yremind').value||0,s_remind:+document.getElementById('kf-sremind').value||0,k_remind:+document.getElementById('kf-kremind').value||0};
   
   // 褒め演出: 新規発行済みになった場合
   const isNewYDone=data.y_status==='発行済'&&(!prev||prev.y_status!=='発行済');
