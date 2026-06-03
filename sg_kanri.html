@@ -1249,7 +1249,7 @@ function kRenderSched(){
     const isPast=r.kensa_date.match(/\d{4}-\d{2}-\d{2}/)&&r.kensa_date<KTODAY,isToday=r.kensa_date===KTODAY;
     const cls=isPast?'past':isToday?'today':'future';
     const m=r.kensa_date.match(/(\d{4})-(\d{2})-(\d{2})/);
-    const dateDisp=m?`<div class="dd">${m[3]}</div><div class="ym">${m[1]}/${m[2]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
+    const dateDisp=m?`<div class="dd">${+m[2]}/${+m[3]}</div><div class="ym">${m[1]}</div>`:`<div style="font-size:11px;font-weight:bold">${escH(r.kensa_date)}</div>`;
     return `<div class="sched-card ${cls}"><div class="sched-date">${dateDisp}</div><div class="sched-info"><div class="sched-kiki">${escH(r.kiki)} <span style="font-size:11px;color:var(--muted)">${r.y_rev||r.rev?"要Rev."+escH(r.y_rev||r.rev||""):""}${(r.y_rev||r.rev)&&(r.s_rev||r.rev)?" / ":""}${r.s_rev||r.rev?"成Rev."+escH(r.s_rev||r.rev||""):""}</span></div><div class="sched-meta">${ankenTag(r.anken)} PRNo: ${escH(r.prno)} ${escH(r.vendor)}</div><div class="sched-meta" style="margin-top:2px;">${r.kensa_kubun?'区分: '+escH(r.kensa_kubun)+' ':''}${r.kensa_place?'場所: '+escH(r.kensa_place)+' ':''}${r.kensa_inspector?'検査員: '+escH(r.kensa_inspector):''}</div></div><div>${rBadge(r.kensa_result)}</div><button class="icon-btn ib-edit" onclick="kOpenEdit(${r.id})">✏</button></div>`;
   }).join('');
 }
