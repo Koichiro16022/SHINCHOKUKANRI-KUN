@@ -2,9 +2,10 @@
   "name": "進捗管理くん",
   "short_name": "進捗管理くん",
   "description": "進捗管理・検査図書管理アプリ",
-  "start_url": "/SHINCHOKUKANRI-KUN/%E9%80%B2%E6%8D%97%E7%AE%A1%E7%90%86%E3%81%8F%E3%82%93.html",
+  "start_url": "./進捗管理くん.html",
+  "scope": "/SHINCHOKUKANRI-KUN/",
   "display": "standalone",
-  "background_color": "#f0f4ff",
+  "background_color": "#3B82F6",
   "theme_color": "#3B82F6",
   "icons": [
     {
@@ -20,7 +21,7 @@
       "purpose": "any"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
