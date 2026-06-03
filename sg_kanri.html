@@ -486,6 +486,12 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
 <div class="app-panel" id="panel-settings">
   <div class="panel">
     <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
+      <label style="font-weight:bold;font-size:14px;">📂 バックアップから復元</label>
+      <div style="margin-top:8px;font-size:12px;color:#888;">別PCで作成したバックアップJSONを選択すると、このPCにデータが復元されます（現在のデータは上書き）</div>
+      <button onclick="document.getElementById('restore-file-input').click()" style="margin-top:10px;background:#10B981;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;">📂 JSONファイルを選択して復元</button>
+      <input type="file" id="restore-file-input" accept=".json" style="display:none;" onchange="window.restoreFromBackup(this)">
+    </div>
+    <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
       <label style="font-weight:bold;font-size:14px;">💾 自動バックアップ設定</label>
       <div style="margin-top:8px;font-size:12px;color:#888;">起動時・保存時に指定フォルダへ日付別JSONを自動保存します（例: 20260603.json）</div>
       <button onclick="(async function(){
@@ -1434,6 +1440,29 @@ window.initBackup=async function(){
     }
   }catch(e){console.warn('initBackup:',e);}
 }
+
+
+window.restoreFromBackup=function(input){
+  const file=input.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      const keys=['sg_v1','sg_kensa','sg_oshi','sg_quiet','sg_bg','sg_hkd'];
+      const found=keys.filter(k=>data[k]!=null);
+      if(!found.length){alert('有効なバックアップファイルではありません');return;}
+      if(!confirm('バックアップファイル（'+file.name+'）から復元します。\n現在のデータは上書きされます。よろしいですか？'))return;
+      found.forEach(k=>{if(data[k])localStorage.setItem(k,data[k]);});
+      alert('✅ 復元完了しました。ページを再読み込みします。');
+      location.reload();
+    }catch(ex){
+      alert('復元に失敗しました: '+ex.message);
+    }
+  };
+  reader.readAsText(file);
+  input.value='';
+};
 
 function cdlShow(inputId, listId){
   const inp=document.getElementById(inputId);
