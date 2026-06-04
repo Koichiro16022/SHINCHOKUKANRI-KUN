@@ -1146,11 +1146,7 @@ fileInput.addEventListener('change',e=>{
 
 // エクスポート/インポート
 function exportData(){const p={tasks:taskList,archived:archivedTasks,praises:praiseList.join(','),reminds:remindList.join(','),images:imageCollection,bgcolor:localStorage.getItem('sg_bg')||'#f8f9fa',oshi:oshiList};const now=new Date(),pd=n=>String(n).padStart(2,'0'),stamp=`${now.getFullYear()}${pd(now.getMonth()+1)}${pd(now.getDate())}`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`${stamp}.json`;a.click();}
-document.getElementById('import-file-input').addEventListener('change',e=>{
-  const f=e.target.files[0];if(!f)return;
-  if(!confirm('現在のデータを上書きしますか？')){e.target.value='';return;}
-  const r=new FileReader();r.onload=ev=>{try{const d=JSON.parse(ev.target.result);taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);imageCollection=d.images||[];if(d.oshi)oshiList=d.oshi;if(d.bgcolor)setBgColor(d.bgcolor);saveData();saveOshiData();renderCollection();renderTasks();renderArchive();renderPhraseList('praise');renderPhraseList('remind');renderOshiList();alert('読み込みました');}catch(err){alert('読み込み失敗');}e.target.value='';};r.readAsText(f);
-});
+
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 検査図書管理
