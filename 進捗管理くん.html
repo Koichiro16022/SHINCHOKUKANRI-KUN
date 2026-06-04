@@ -1151,7 +1151,7 @@ fileInput.addEventListener('change',e=>{
 });
 
 // エクスポート/インポート
-function exportData(){const p={tasks:taskList,archived:archivedTasks,praises:praiseList.join(','),reminds:remindList.join(','),images:imageCollection,bgcolor:localStorage.getItem('sg_bg')||'#f8f9fa',oshi:oshiList};const now=new Date(),pd=n=>String(n).padStart(2,'0'),stamp=`${now.getFullYear()}${pd(now.getMonth()+1)}${pd(now.getDate())}_${pd(now.getHours())}${pd(now.getMinutes())}`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`sg_backup_${stamp}.json`;a.click();}
+function exportData(){const p={tasks:taskList,archived:archivedTasks,praises:praiseList.join(','),reminds:remindList.join(','),images:imageCollection,bgcolor:localStorage.getItem('sg_bg')||'#f8f9fa',oshi:oshiList};const now=new Date(),pd=n=>String(n).padStart(2,'0'),stamp=`${now.getFullYear()}${pd(now.getMonth()+1)}${pd(now.getDate())}`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(p,null,2)],{type:'application/json'}));a.download=`${stamp}.json`;a.click();}
 document.getElementById('import-file-input').addEventListener('change',e=>{
   const f=e.target.files[0];if(!f)return;
   if(!confirm('現在のデータを上書きしますか？')){e.target.value='';return;}
