@@ -1557,7 +1557,7 @@ window.deleteManualTask=deleteManualTask;
 
 } catch(criticalError) {
   console.error('起動エラー:',criticalError);
-  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message);
+  alert('起動エラーが発生しました。ページを再読み込みしてください。\n'+criticalError.message+'\n\nスタック:\n'+(criticalError.stack||'不明'));
 }
 </script>
 </body>
