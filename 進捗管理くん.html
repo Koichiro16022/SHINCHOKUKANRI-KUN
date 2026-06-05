@@ -1463,7 +1463,7 @@ window.initBackup=async function(){
     }
   }catch(e){console.warn('initBackup:',e);}
 }
-function showBackupBanner(reason, folderName){
+window.showBackupBanner=function(reason, folderName){
   const existing=document.getElementById('backup-banner');
   if(existing)return;
   const banner=document.createElement('div');
@@ -1504,7 +1504,7 @@ window.restoreFromBackup=function(input){
 
 // ── 検査予定 動的リスト ──────────────────────────────
 let _kensaItems=[];
-function kRenderKensaItems(){
+window.kRenderKensaItems=function(){
   const container=document.getElementById('kf-kensa-list');
   if(!container)return;
   container.innerHTML='';
@@ -1525,16 +1525,16 @@ function kRenderKensaItems(){
     container.appendChild(div);
   });
 }
-function kAddKensaItem(){
+window.kAddKensaItem=function(){
   if(_kensaItems.length>=3){toast('検査予定は最大3件です',true);return;}
   _kensaItems.push({date_d:'',date_t:'',kubun:'完成検査',place:'',inspector:'',result:''});
   kRenderKensaItems();
 }
-function kRemoveKensaItem(i){
+window.kRemoveKensaItem=function(i){
   _kensaItems.splice(i,1);
   kRenderKensaItems();
 }
-function kCollectKensaItems(){
+window.kCollectKensaItems=function(){
   return _kensaItems.map(function(item,i){
     const d=document.getElementById('kf-kdate-d-'+i);
     const t=document.getElementById('kf-kdate-t-'+i);
