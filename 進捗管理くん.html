@@ -784,7 +784,7 @@ function getKPendingTasks(){
     (function(){
       var items=r.kensa_items&&r.kensa_items.length?r.kensa_items:(r.kensa_date?[{date:r.kensa_date,kubun:r.kensa_kubun||'',place:r.kensa_place||'',inspector:r.kensa_inspector||'',result:r.kensa_result||'',k_remind:r.k_remind||r.remindDaysBefore||0,k_hidden:r.k_hidden||false}]:[]);
       items.forEach(function(it,idx){
-        if(it.date&&!it.result&&!it.k_hidden){
+        if((it.date||it.kubun)&&!it.result&&!it.k_hidden){
           tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',_kIdx:idx,category:'検査日',anken:r.anken||'',prno:r.prno||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:it.date,status:'',kubun:it.kubun||'',inspector:it.inspector||'',place:it.place||'',biko:r.kensa_biko||'',remindDaysBefore:it.k_remind||0});
         }
       });
@@ -978,7 +978,7 @@ addBtn.addEventListener('click',()=>{
     editIndex=-1;addBtn.textContent='＋ タスクを追加';addBtn.classList.remove('edit-mode');
     saveData();
   } else {
-    const nr={id:kNextId++,anken,prno,kiki:kiki||biko,y_rev:cat==='要領書'?rev:'',s_rev:cat==='成績書'?rev:'',vendor,y_status:cat==='要領書'?status:'',y_date:cat==='要領書'?date:'',y_biko:'',s_status:cat==='成績書'?status:'',s_date:cat==='成績書'?date:'',s_biko:'',kensa_date:cat==='検査日'?date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',remindDaysBefore:remind};
+    const nr={id:kNextId++,anken,prno,kiki:kiki||biko,y_rev:cat==='要領書'?rev:'',s_rev:cat==='成績書'?rev:'',vendor,y_status:cat==='要領書'?status:'',y_date:cat==='要領書'?date:'',y_biko:'',s_status:cat==='成績書'?status:'',s_date:cat==='成績書'?date:'',s_biko:'',kensa_date:cat==='検査日'?date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',kensa_items:cat==='要領書'||cat==='成績書'?[{date:cat==='検査日'?date:'',kubun:'完成検査',place:'',inspector:'',result:'',k_remind:0,k_hidden:false}]:[],remindDaysBefore:remind};
     kRecords.push(nr);kSave();ensureAnkenColors();saveOshiData();populateAnkenDl();kPopulateAnken();kRenderDash();
   }
   ['task-cat-input','task-anken-input','task-prno-input','task-rev-input','task-kiki-input','task-vendor-input','task-date-input','task-biko-input'].forEach(id=>f(id).value='');
