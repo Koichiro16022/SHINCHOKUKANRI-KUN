@@ -1448,18 +1448,34 @@ window.autoBackup=async function(){
 window.initBackup=async function(){
   try{
     const handle=await _bkLoadHandle();
-    if(!handle)return;
+    const lt=localStorage.getItem('sg_last_backup');
+    const elLt=document.getElementById('backup-last-time');
+    if(elLt&&lt)elLt.textContent='最終バックアップ: '+lt;
+    if(!handle){showBackupBanner('未設定');return;}
     window._backupDirHandle=handle;
     const perm=await handle.queryPermission({mode:'readwrite'});
     if(perm==='granted'){
       const st=document.getElementById('backup-dir-status');
       if(st)st.textContent='✅ 設定済み：'+handle.name;
-      const lt=localStorage.getItem('sg_last_backup');
-      const el=document.getElementById('backup-last-time');
-      if(el&&lt)el.textContent='最終バックアップ: '+lt;
       autoBackup();
+    } else {
+      showBackupBanner('再許可が必要',handle.name);
     }
   }catch(e){console.warn('initBackup:',e);}
+}
+function showBackupBanner(reason, folderName){
+  const existing=document.getElementById('backup-banner');
+  if(existing)return;
+  const banner=document.createElement('div');
+  banner.id='backup-banner';
+  banner.style.cssText='position:fixed;bottom:16px;right:16px;background:#1E40AF;color:#fff;border-radius:10px;padding:12px 16px;font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:300px;';
+  const msg=reason==='再許可が必要'
+    ?`🔔 バックアップフォルダ「${folderName}」の許可が必要です`
+    :'🔔 バックアップフォルダが未設定です';
+  banner.innerHTML=`<div style="margin-bottom:8px;">${msg}</div>
+    <button onclick="(async()=>{try{const h=await window.showDirectoryPicker({mode:'readwrite'});window._backupDirHandle=h;await _bkSaveHandle(h);const st=document.getElementById('backup-dir-status');if(st)st.textContent='✅ 設定済み：'+h.name;autoBackup();document.getElementById('backup-banner').remove();}catch(e){if(e.name!=='AbortError')alert('エラー: '+e.message);}})()" style="background:#fff;color:#1E40AF;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:bold;cursor:pointer;margin-right:8px;">📁 フォルダを選択</button>
+    <button onclick="document.getElementById('backup-banner').remove()" style="background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">後で</button>`;
+  document.body.appendChild(banner);
 }
 
 
