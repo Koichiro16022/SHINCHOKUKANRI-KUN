@@ -329,14 +329,16 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <!-- 発行状況 (要領書/成績書のみ) -->
       <div class="row-group" id="task-status-row">
         <label>📋 発行状況:</label>
-        <input type="text" id="task-status-input" list="status-dl" placeholder="発行状況を選択または入力" style="flex:1;margin:0;">
-        <datalist id="status-dl">
-          <option value="未着手">
-          <option value="チェック中">
-          <option value="回覧中">
-          <option value="特採発行待ち">
-          <option value="発行済">
-        </datalist>
+        <div class="cdl-wrap" style="flex:1;">
+          <input type="text" id="task-status-input" placeholder="発行状況を選択または入力" autocomplete="off" onfocus="cdlShow('task-status-input','task-status-cdl')" oninput="cdlShow('task-status-input','task-status-cdl')" style="width:100%;margin:0;">
+          <div class="cdl-list" id="task-status-cdl">
+            <div class="cdl-item" onmousedown="cdlPick('task-status-input','task-status-cdl','未着手')">未着手</div>
+            <div class="cdl-item" onmousedown="cdlPick('task-status-input','task-status-cdl','チェック中')">チェック中</div>
+            <div class="cdl-item" onmousedown="cdlPick('task-status-input','task-status-cdl','回覧中')">回覧中</div>
+            <div class="cdl-item" onmousedown="cdlPick('task-status-input','task-status-cdl','特採発行待ち')">特採発行待ち</div>
+            <div class="cdl-item" onmousedown="cdlPick('task-status-input','task-status-cdl','発行済')">発行済</div>
+          </div>
+        </div>
       </div>
       <!-- 検査結果 (検査日のみ) -->
       <div class="row-group" id="task-result-row" style="display:none;">
