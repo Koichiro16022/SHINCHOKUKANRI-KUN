@@ -1162,6 +1162,12 @@ function kInit(){
   const saved=localStorage.getItem('sg_kensa');
   if(saved){try{const d=JSON.parse(saved);kRecords=d.records||[];kNextId=d.nextId||1;}catch(e){}}
   if(!kRecords.length){kRecords=JSON.parse(JSON.stringify(KENSA_INITIAL));kNextId=Math.max(...kRecords.map(r=>r.id||0))+1;}
+  // マイグレーション: 「社内」→「完成検査」
+  kRecords.forEach(function(r){
+    if(r.kensa_kubun==='社内')r.kensa_kubun='完成検査';
+    if(r.kensa_items)r.kensa_items.forEach(function(it){if(it.kubun==='社内')it.kubun='完成検査';});
+  });
+  kSave();
   kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
 }
 function kSave(){try{localStorage.setItem('sg_kensa',JSON.stringify({records:kRecords,nextId:kNextId}));}catch(e){toast('保存できませんでした',true);}}
