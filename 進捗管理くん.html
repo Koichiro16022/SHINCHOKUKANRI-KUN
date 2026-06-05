@@ -522,6 +522,8 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
   }
 })()" style="margin-top:10px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;">📁 バックアップフォルダを選択</button>
       <span id="backup-dir-status" style="font-size:12px;color:#10B981;margin-left:10px;"></span>
+      <div id="backup-last-time" style="font-size:12px;color:#888;margin-top:6px;"></div>
+      <div id="backup-last-time" style="font-size:12px;color:#888;margin-top:6px;"></div>
     </div>
     <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
       <label style="font-weight:bold;font-size:14px;">🎨 案件カラー管理 <span style="font-weight:normal;font-size:12px;color:#999;">（案件ごとに色を設定）</span></label>
@@ -1437,6 +1439,10 @@ window.autoBackup=async function(){
     const wr=await fh.createWritable();
     await wr.write(JSON.stringify(data,null,2));
     await wr.close();
+    const ts=new Date().toLocaleString('ja-JP');
+    localStorage.setItem('sg_last_backup',ts);
+    const el=document.getElementById('backup-last-time');
+    if(el)el.textContent='最終バックアップ: '+ts;
   }catch(e){console.warn('Backup error:',e);}
 }
 window.initBackup=async function(){
@@ -1448,6 +1454,9 @@ window.initBackup=async function(){
     if(perm==='granted'){
       const st=document.getElementById('backup-dir-status');
       if(st)st.textContent='✅ 設定済み：'+handle.name;
+      const lt=localStorage.getItem('sg_last_backup');
+      const el=document.getElementById('backup-last-time');
+      if(el&&lt)el.textContent='最終バックアップ: '+lt;
       autoBackup();
     }
   }catch(e){console.warn('initBackup:',e);}
@@ -1545,6 +1554,7 @@ document.addEventListener('click', function(e){
   });
 });
 window.addEventListener('load',()=>{if(window.initBackup)window.initBackup();initBackup();
+  (function(){const lt=localStorage.getItem('sg_last_backup');const el=document.getElementById('backup-last-time');if(el&&lt)el.textContent='最終バックアップ: '+lt;})();
   canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
   if('Notification'in window&&Notification.permission==='default')Notification.requestPermission();
 
