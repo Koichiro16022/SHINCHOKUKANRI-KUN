@@ -1572,6 +1572,23 @@ document.addEventListener('click', function(e){
     if(!l.previousElementSibling||!l.previousElementSibling.contains(e.target)) l.classList.remove('open');
   });
 });
+
+// ── 他ウィンドウとのデータ同期 ──────────────────────────
+window.addEventListener('storage', function(e){
+  if(e.key==='sg_kensa'){
+    try{const d=JSON.parse(e.newValue);kRecords=d.records||[];kNextId=d.nextId||1;}catch(ex){}
+    kRenderDash();kApplyFilters();kRenderSched();renderTasks();
+    toast('🔄 他のウィンドウのデータを同期しました');
+  } else if(e.key==='sg_v1'){
+    try{const d=JSON.parse(e.newValue);taskList=d.tasks||[];archivedTasks=d.archived||[];}catch(ex){}
+    renderTasks();renderArchive();
+    toast('🔄 他のウィンドウのデータを同期しました');
+  } else if(e.key==='sg_oshi'){
+    try{const d=JSON.parse(e.newValue);oshiList=d.list||[];}catch(ex){}
+    renderOshiList();
+  }
+});
+
 window.addEventListener('load',()=>{if(window.initBackup)window.initBackup();initBackup();
   (function(){const lt=localStorage.getItem('sg_last_backup');const el=document.getElementById('backup-last-time');if(el&&lt)el.textContent='最終バックアップ: '+lt;})();
   canvas.width=window.innerWidth;canvas.height=window.innerHeight;animate();
