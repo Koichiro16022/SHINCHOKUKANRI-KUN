@@ -1275,7 +1275,7 @@ function openKTab(name){
 }
 
 // モーダル
-function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-yremind').value=0;document.getElementById('kf-sremind').value=0;document.getElementById('kf-kremind').value=0;_kensaItems=[{date_d:'',date_t:'',kubun:'',place:'',inspector:'',result:''}];kRenderKensaItems();document.getElementById('kOverlay').classList.add('open');}
+function kOpenAdd(){kEditId=null;document.getElementById('kMTitle').textContent='新規登録';document.getElementById('kMIcon').textContent='📝';['anken','prno','kiki','rev','vendor','ybiko','sbiko','kdate','place','inspector'].forEach(f=>{const el=document.getElementById('kf-'+f);if(el)el.value='';});['ystatus','sstatus','kubun','result'].forEach(f=>document.getElementById('kf-'+f).value='');document.getElementById('kf-yremind').value=0;document.getElementById('kf-sremind').value=0;document.getElementById('kf-kremind').value=0;_kensaItems=[{date_d:'',date_t:'',kubun:'完成検査',place:'',inspector:'',result:''}];kRenderKensaItems();document.getElementById('kOverlay').classList.add('open');}
 function toDTL(s){if(!s)return '';if(s.includes('T'))return s;return s+'T00:00';}function kOpenEdit(id){const r=kRecords.find(x=>x.id===id);if(!r)return;kEditId=id;document.getElementById('kMTitle').textContent='編集';document.getElementById('kMIcon').textContent='✏️';document.getElementById('kf-anken').value=r.anken;document.getElementById('kf-prno').value=r.prno;document.getElementById('kf-kiki').value=r.kiki;document.getElementById('kf-yrev').value=r.y_rev||r.rev||'';document.getElementById('kf-srev').value=r.s_rev||r.rev||'';document.getElementById('kf-vendor').value=r.vendor||'';document.getElementById('kf-ystatus').value=r.y_status||'';(function(){
   function splitDT(s){if(!s)return['',''];var p=s.split('T');return[p[0],p[1]||''];}
   var yd=splitDT(r.y_date||'');document.getElementById('kf-ybiko-d').value=yd[0];document.getElementById('kf-ybiko-t').value=yd[1];
@@ -1486,7 +1486,7 @@ function kRenderKensaItems(){
     </div>
     <div class="form-grid" style="gap:8px;">
       <div class="fg"><label>検査日</label><div style="display:flex;gap:6px;"><input type="date" id="kf-kdate-d-${i}" value="${item.date_d||''}" style="flex:2;margin:0;"><input type="time" id="kf-kdate-t-${i}" value="${item.date_t||''}" style="flex:1;margin:0;" placeholder="時刻(任意)"></div></div>
-      <div class="fg"><label>区分</label><input type="text" id="kf-kubun-${i}" value="${item.kubun||''}" placeholder="中間検査/完成検査/客先検査" list="kubun-dl-${i}" style="margin:0;"><datalist id="kubun-dl-${i}"><option value="中間検査"><option value="完成検査"><option value="客先検査"></datalist></div>
+      <div class="fg"><label>区分</label><input type="text" id="kf-kubun-${i}" value="${item.kubun||''}" placeholder="中間検査/完成検査/客先検査" autocomplete="off" list="kubun-dl-${i}" style="margin:0;"><datalist id="kubun-dl-${i}"><option value="中間検査"><option value="完成検査"><option value="客先検査"></datalist></div>
       <div class="fg"><label>検査場所</label><input id="kf-place-${i}" value="${item.place||''}" style="margin:0;"></div>
       <div class="fg"><label>検査員</label><input id="kf-inspector-${i}" value="${item.inspector||''}" style="margin:0;"></div>
       <div class="fg full"><label>検査結果</label><select id="kf-result-${i}" style="margin:0;"><option value="">（未実施）</option><option value="合格"${item.result==='合格'?' selected':''}>合格</option><option value="不合格"${item.result==='不合格'?' selected':''}>不合格</option><option value="保留"${item.result==='保留'?' selected':''}>保留</option></select></div>
@@ -1496,7 +1496,7 @@ function kRenderKensaItems(){
 }
 function kAddKensaItem(){
   if(_kensaItems.length>=3){toast('検査予定は最大3件です',true);return;}
-  _kensaItems.push({date_d:'',date_t:'',kubun:'',place:'',inspector:'',result:''});
+  _kensaItems.push({date_d:'',date_t:'',kubun:'完成検査',place:'',inspector:'',result:''});
   kRenderKensaItems();
 }
 function kRemoveKensaItem(i){
