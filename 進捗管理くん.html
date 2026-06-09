@@ -299,15 +299,15 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
         <input type="text" id="task-anken-input" list="anken-dl2" placeholder="案件名" style="flex:1;margin:0;">
       </div>
       <datalist id="anken-dl2"></datalist>
-      <!-- PRNo -->
-      <div class="row-group">
-        <label>🔢 PRNo:</label>
-        <input type="text" id="task-prno-input" placeholder="PRNo" style="flex:1;margin:0;">
-      </div>
       <!-- ONo -->
       <div class="row-group">
         <label>🔖 ONo:</label>
         <div class="cdl-wrap" style="flex:1;"><input type="text" id="task-ono-input" placeholder="例: 25-001" autocomplete="off" onfocus="cdlShowDynamic('task-ono-input','task-ono-cdl',window.kGetOnoList())" oninput="cdlShowDynamic('task-ono-input','task-ono-cdl',window.kGetOnoList())" style="width:100%;margin:0;"><div class="cdl-list" id="task-ono-cdl"></div></div>
+      </div>
+      <!-- PRNo -->
+      <div class="row-group">
+        <label>🔢 PRNo:</label>
+        <input type="text" id="task-prno-input" placeholder="PRNo" style="flex:1;margin:0;">
       </div>
       <!-- Rev -->
       <div class="row-group">
