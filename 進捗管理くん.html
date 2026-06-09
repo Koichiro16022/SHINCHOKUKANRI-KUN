@@ -1472,12 +1472,16 @@ window.showBackupBanner=function(reason, folderName){
   const banner=document.createElement('div');
   banner.id='backup-banner';
   banner.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1E40AF;color:#fff;border-radius:14px;padding:20px 24px;font-size:14px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.4);width:320px;text-align:center;';
-  const msg=reason==='再許可が必要'
-    ?`🔔 バックアップフォルダ「${folderName}」の許可が必要です`
-    :'🔔 バックアップフォルダが未設定です';
-  banner.innerHTML=`<div style="margin-bottom:8px;">${msg}</div>
-    <button onclick="(async()=>{try{const h=await window.showDirectoryPicker({mode:'readwrite'});window._backupDirHandle=h;await _bkSaveHandle(h);const st=document.getElementById('backup-dir-status');if(st)st.textContent='✅ 設定済み：'+h.name;autoBackup();document.getElementById('backup-banner').remove();}catch(e){if(e.name!=='AbortError')alert('エラー: '+e.message);}})()" style="background:#fff;color:#1E40AF;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:bold;cursor:pointer;margin-right:8px;">📁 フォルダを選択</button>
-    <button onclick="document.getElementById('backup-banner').remove()" style="background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">後で</button>`;
+  if(reason==='再許可が必要'){
+    // フォルダは保存済み → requestPermission() で1クリック許可するだけ
+    banner.innerHTML=`<div style="margin-bottom:8px;">🔔 バックアップフォルダ「${folderName}」へのアクセスを許可してください</div>
+      <button onclick="(async()=>{try{const perm=await window._backupDirHandle.requestPermission({mode:'readwrite'});if(perm==='granted'){const st=document.getElementById('backup-dir-status');if(st)st.textContent='✅ 設定済み：'+window._backupDirHandle.name;autoBackup();document.getElementById('backup-banner').remove();}else{alert('許可されませんでした。設定からフォルダを再選択してください。');}}catch(e){alert('エラー: '+e.message);}})()" style="background:#fff;color:#1E40AF;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:bold;cursor:pointer;margin-right:8px;">✅ 許可する</button>
+      <button onclick="document.getElementById('backup-banner').remove()" style="background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">後で</button>`;
+  } else {
+    banner.innerHTML=`<div style="margin-bottom:8px;">🔔 バックアップフォルダが未設定です</div>
+      <button onclick="(async()=>{try{const h=await window.showDirectoryPicker({mode:'readwrite'});window._backupDirHandle=h;await _bkSaveHandle(h);const st=document.getElementById('backup-dir-status');if(st)st.textContent='✅ 設定済み：'+h.name;autoBackup();document.getElementById('backup-banner').remove();}catch(e){if(e.name!=='AbortError')alert('エラー: '+e.message);}})()" style="background:#fff;color:#1E40AF;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:bold;cursor:pointer;margin-right:8px;">📁 フォルダを選択</button>
+      <button onclick="document.getElementById('backup-banner').remove()" style="background:transparent;color:#fff;border:1px solid #fff;border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;">後で</button>`;
+  }
   document.body.appendChild(banner);
 }
 
