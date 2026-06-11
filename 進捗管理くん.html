@@ -237,6 +237,12 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
 @keyframes ti{from{transform:translateX(50px);opacity:0}to{transform:none;opacity:1}}
 
 #img-loading{font-size:12px;color:#888;margin-top:4px;display:none;}
+.bk-switch{position:relative;display:inline-block;width:46px;height:24px;flex-shrink:0;}
+.bk-switch input{opacity:0;width:0;height:0;}
+.bk-switch .bk-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;border-radius:24px;transition:.2s;}
+.bk-switch .bk-slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background-color:#fff;border-radius:50%;transition:.2s;}
+.bk-switch input:checked + .bk-slider{background-color:#10B981;}
+.bk-switch input:checked + .bk-slider:before{transform:translateX(22px);}
 </style>
 </head>
 <body>
@@ -515,7 +521,11 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
     </div>
     <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
       <label style="font-weight:bold;font-size:14px;">💾 自動バックアップ設定</label>
-      <div style="margin-top:8px;font-size:12px;color:#888;">起動時・保存時に指定フォルダへ日付別JSONを自動保存します（例: 20260603.json）</div>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:10px;">
+        <label class="bk-switch"><input type="checkbox" id="backup-enabled-toggle" onchange="window.toggleBackupEnabled(this.checked)"><span class="bk-slider"></span></label>
+        <span id="backup-enabled-label" style="font-size:13px;font-weight:bold;">バックアップ: ON</span>
+      </div>
+      <div style="margin-top:8px;font-size:12px;color:#888;">起動時・保存時に指定フォルダへ日付別JSONを自動保存します（例: 20260603.json）<br>OFFにすると許可画面も表示されなくなります。</div>
       <button onclick="(async function(){
   try{
     if(!window.showDirectoryPicker){alert('showDirectoryPicker非対応');return;}
@@ -1433,6 +1443,7 @@ window.selectBackupDir=async function(){
   }
 }
 window.autoBackup=async function(){
+  if(!window.isBackupEnabled())return;
   if(!window._backupDirHandle)return;
   try{
     const perm=await window._backupDirHandle.requestPermission({mode:'readwrite'});
@@ -1460,10 +1471,16 @@ window.autoBackup=async function(){
 }
 window.initBackup=async function(){
   try{
-    const handle=await _bkLoadHandle();
+    const toggle=document.getElementById('backup-enabled-toggle');
+    const enabled=window.isBackupEnabled();
+    if(toggle)toggle.checked=enabled;
+    const lbl=document.getElementById('backup-enabled-label');
+    if(lbl)lbl.textContent='バックアップ: '+(enabled?'ON':'OFF');
     const lt=localStorage.getItem('sg_last_backup');
     const elLt=document.getElementById('backup-last-time');
     if(elLt&&lt)elLt.textContent='最終バックアップ: '+lt;
+    if(!enabled)return;
+    const handle=await _bkLoadHandle();
     if(!handle){showBackupBanner('未設定');return;}
     window._backupDirHandle=handle;
     const perm=await handle.queryPermission({mode:'readwrite'});
@@ -1656,6 +1673,20 @@ window.exportData=exportData;
 window.resetImages=resetImages;
 window.deleteImage=deleteImage;
 window.openKTab=openKTab;
+window.isBackupEnabled=function(){
+  return localStorage.getItem('sg_backup_enabled')!=='0';
+};
+window.toggleBackupEnabled=function(checked){
+  localStorage.setItem('sg_backup_enabled',checked?'1':'0');
+  const lbl=document.getElementById('backup-enabled-label');
+  if(lbl)lbl.textContent='バックアップ: '+(checked?'ON':'OFF');
+  const banner=document.getElementById('backup-banner');
+  if(!checked){
+    if(banner)banner.remove();
+  } else {
+    initBackup();
+  }
+};
 window.kGetOnoList=function(){
   const set=new Set();
   kRecords.forEach(r=>{if(r.ono&&r.ono.trim())set.add(r.ono.trim());});
