@@ -670,14 +670,18 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
     <div class="k-modal-body">
       <div class="fg full">
         <label>結果</label>
-        <div class="cdl-wrap">
-          <input type="text" id="kResultInput" placeholder="合格 / 不合格 / 保留 / 不合格／特採（自由入力可）" autocomplete="off" onfocus="cdlShow('kResultInput','kresult-cdl')" oninput="cdlShow('kResultInput','kresult-cdl')" onkeydown="if(event.key==='Enter')kConfirmResult()">
-          <div class="cdl-list" id="kresult-cdl">
-            <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','合格')">合格</div>
-            <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','不合格')">不合格</div>
-            <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','保留')">保留</div>
-            <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','不合格／特採')">不合格／特採</div>
-          </div>
+        <input type="text" id="kResultInput" list="kresult-dl" placeholder="合格 / 不合格 / 保留 / 不合格／特採（自由入力可）" autocomplete="off" onkeydown="if(event.key==='Enter')kConfirmResult()">
+        <datalist id="kresult-dl">
+          <option value="合格"></option>
+          <option value="不合格"></option>
+          <option value="保留"></option>
+          <option value="不合格／特採"></option>
+        </datalist>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">
+          <button type="button" class="kbtn kbtn-outline" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('kResultInput').value='合格'">合格</button>
+          <button type="button" class="kbtn kbtn-outline" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('kResultInput').value='不合格'">不合格</button>
+          <button type="button" class="kbtn kbtn-outline" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('kResultInput').value='保留'">保留</button>
+          <button type="button" class="kbtn kbtn-outline" style="padding:6px 12px;font-size:12px;" onclick="document.getElementById('kResultInput').value='不合格／特採'">不合格／特採</button>
         </div>
       </div>
     </div>
