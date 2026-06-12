@@ -61,7 +61,7 @@ li.task-item{background:#fff;padding:14px;border-radius:12px;margin-bottom:10px;
 
 /* アーカイブ */
 .archive-section{width:100%;}
-.archive-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.archive-header{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
 .archive-header h3{margin:0;color:#888;font-size:1rem;flex:1;}
 .toggle-archive-btn,.clear-archive-btn{background:#aaa;color:#fff;border:none;padding:6px 14px;border-radius:15px;cursor:pointer;font-size:12px;font-weight:bold;}
 #archive-list li{background:#f5f5f5;padding:12px 15px;border-radius:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:10px;border-left:14px solid #bbb;opacity:.85;}
@@ -390,6 +390,10 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
   <div class="archive-section" style="margin-top:8px;">
     <div class="archive-header">
       <h3>📦 完了履歴 (<span id="archive-count">0</span>)</h3>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#888;cursor:pointer;white-space:nowrap;">
+        <input type="checkbox" id="archive-select-all" onchange="archiveToggleSelectAll(this.checked)">全選択
+      </label>
+      <button class="archive-delete-btn" id="archive-bulk-delete-btn" onclick="archiveBulkDelete()" style="display:none;background:#EF4444;white-space:nowrap;">🗑 一括削除 (<span id="archive-sel-count">0</span>)</button>
       <button class="toggle-archive-btn" onclick="toggleArchive()">▼ 表示</button>
     </div>
     <ul id="archive-list" style="display:none;"></ul>
@@ -1048,10 +1052,50 @@ function toggleArchive(){const l=document.getElementById('archive-list'),b=docum
 // kRecords履歴の非表示リスト（削除した履歴のキーを保持）
 let hiddenKDone=[];
 function saveHiddenKDone(){try{localStorage.setItem('sg_hkd',JSON.stringify(hiddenKDone))}catch(e){}}
+// 完了履歴の一括削除用チェック状態
+let archiveSelected=new Set();
+let _lastArchiveQuery=null;
+function updateArchiveBulkUI(){
+  const chks=document.querySelectorAll('#archive-list .archive-chk');
+  const cnt=archiveSelected.size;
+  const btn=document.getElementById('archive-bulk-delete-btn');
+  const cntSpan=document.getElementById('archive-sel-count');
+  const selAll=document.getElementById('archive-select-all');
+  if(cntSpan)cntSpan.textContent=cnt;
+  if(btn)btn.style.display=cnt>0?'inline-flex':'none';
+  if(selAll)selAll.checked=chks.length>0&&Array.from(chks).every(c=>c.checked);
+}
+window.archiveToggleSelectAll=function(checked){
+  document.querySelectorAll('#archive-list .archive-chk').forEach(c=>{
+    c.checked=checked;
+    const k=c.dataset.selkey;
+    if(checked)archiveSelected.add(k);else archiveSelected.delete(k);
+  });
+  updateArchiveBulkUI();
+};
+window.archiveBulkDelete=function(){
+  if(archiveSelected.size===0)return;
+  if(!confirm(`選択した${archiveSelected.size}件を完了履歴から削除しますか？`))return;
+  const manualIdx=[];
+  archiveSelected.forEach(k=>{
+    if(k.charAt(0)==='m'){
+      manualIdx.push(+k.slice(1));
+    } else if(k.charAt(0)==='k'){
+      const key=k.slice(1);
+      if(!hiddenKDone.includes(key))hiddenKDone.push(key);
+    }
+  });
+  manualIdx.sort((a,b)=>b-a).forEach(i=>archivedTasks.splice(i,1));
+  if(manualIdx.length)saveData();
+  saveHiddenKDone();
+  archiveSelected.clear();
+  renderArchive();
+};
 
 function renderArchive(){
   const al=document.getElementById('archive-list'),ac=document.getElementById('archive-count');
   const aq=(document.getElementById('main-search')?.value||'').toLowerCase().trim();
+  if(_lastArchiveQuery!==aq){archiveSelected.clear();_lastArchiveQuery=aq;}
   // kRecordsの発行済み・結果あり（非表示リストを除外）
   const kDone=[];
   kRecords.forEach(r=>{
@@ -1074,8 +1118,8 @@ function renderArchive(){
   const totalDone=archivedTasks.length+kDone.length;
   const totalFiltered=filteredArchived.length+filteredKDone.length;
   ac.textContent=aq?`${totalFiltered}/${totalDone}`:totalDone;al.innerHTML='';
-  if(aq&&totalFiltered===0){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">該当する完了タスクはありません</li>';if(totalDone>0&&al.style.display==='none'){al.style.display='block';}return;}
-  if(!totalDone){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">完了済みタスクはありません</li>';return;}
+  if(aq&&totalFiltered===0){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">該当する完了タスクはありません</li>';if(totalDone>0&&al.style.display==='none'){al.style.display='block';}updateArchiveBulkUI();return;}
+  if(!totalDone){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">完了済みタスクはありません</li>';updateArchiveBulkUI();return;}
   // 検索中は自動展開
   if(aq&&al.style.display==='none') al.style.display='block';
   // 手動完了タスク
@@ -1084,7 +1128,8 @@ function renderArchive(){
     const catColor={'要領書':'#5B5FEF','成績書':'#10B981','検査日':'#F97316'}[t.category]||'#888';
     const li=document.createElement('li');
     li.style.borderLeftColor=color||'#bbb';li.style.opacity='0.75';
-    li.innerHTML=`<div style="flex:1">
+    const selKeyM=`m${i}`;
+    li.innerHTML=`<input type="checkbox" class="archive-chk" data-selkey="${selKeyM}" ${archiveSelected.has(selKeyM)?'checked':''} style="margin-right:2px;flex-shrink:0;width:16px;height:16px;cursor:pointer;"><div style="flex:1">
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:3px;">${t.category?`<span style="font-size:10px;color:#fff;background:${catColor};border-radius:8px;padding:2px 7px;">${escH(t.category)}</span>`:''}<span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 7px;">${escH(t.anken||'')}</span></div>
       <div style="font-weight:bold;color:#999;text-decoration:line-through;">${escH(t.kiki||t.text||'')}</div>
       <div class="completed-at">✅ 完了: ${escH(t.completedAt||'')}</div>
@@ -1097,13 +1142,20 @@ function renderArchive(){
     const catColor={'要領書':'#5B5FEF','成績書':'#10B981','検査日':'#F97316'}[t.category]||'#888';
     const li=document.createElement('li');
     li.style.borderLeftColor=color||'#bbb';li.style.opacity='0.65';
-    li.innerHTML=`<div style="flex:1">
+    const selKeyK=`k${t._key}`;
+    li.innerHTML=`<input type="checkbox" class="archive-chk" data-selkey="${selKeyK}" ${archiveSelected.has(selKeyK)?'checked':''} style="margin-right:2px;flex-shrink:0;width:16px;height:16px;cursor:pointer;"><div style="flex:1">
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:3px;"><span style="font-size:10px;color:#fff;background:${catColor};border-radius:8px;padding:2px 7px;">${escH(t.category)}</span>${t.kubun?`<span style="font-size:10px;color:#fff;background:#0EA5E9;border-radius:8px;padding:2px 7px;">${escH(t.kubun)}</span>`:''}<span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 7px;">${escH(t.anken||'')}</span><span style="font-size:10px;color:#fff;background:#10B981;border-radius:8px;padding:2px 7px;">${escH(t.status)}</span></div>
       <div style="font-weight:bold;color:#999;">${escH(t.kiki||'')}</div>
       ${t.prno?`<div style="font-size:11px;color:#bbb;">PRNo: ${escH(t.prno)}</div>`:''}
     </div><div style="display:flex;gap:4px;"><button class="restore-btn" data-key="${escH(t._key)}">↩ 戻す</button><button class="archive-delete-btn" data-key="${escH(t._key)}">削除</button></div>`;
     al.appendChild(li);
   });
+  al.querySelectorAll('.archive-chk').forEach(c=>c.addEventListener('change',()=>{
+    const k=c.dataset.selkey;
+    if(c.checked)archiveSelected.add(k);else archiveSelected.delete(k);
+    updateArchiveBulkUI();
+  }));
+  updateArchiveBulkUI();
   al.querySelectorAll('.restore-btn').forEach(b=>b.addEventListener('click',()=>{
     if(b.dataset.key){
       // kRecords履歴を未完了に戻す
