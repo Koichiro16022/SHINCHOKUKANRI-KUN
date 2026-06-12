@@ -1730,6 +1730,7 @@ window.addEventListener('load',()=>{if(window.initBackup)window.initBackup();ini
   // タスクデータ読み込み
   const saved=localStorage.getItem('sg_v1');
   if(saved){try{const d=JSON.parse(saved);imageCollection=d.images||[];taskList=d.tasks||[];archivedTasks=d.archived||[];praiseList=(d.praises||'').split(',').map(s=>s.trim()).filter(Boolean);remindList=(d.reminds||'').split(',').map(s=>s.trim()).filter(Boolean);renderPhraseList('praise');renderPhraseList('remind');}catch(e){}}else{renderPhraseList('praise');renderPhraseList('remind');}
+  renderCollection();
 
   try{const q=localStorage.getItem('sg_imgqueue');if(q)imageQueue=JSON.parse(q);}catch(e){}
   const svhkd=localStorage.getItem('sg_hkd');if(svhkd){try{hiddenKDone=JSON.parse(svhkd);}catch(e){}}
