@@ -44,6 +44,7 @@ body{font-family:'Helvetica Neue',Arial,'Hiragino Kaku Gothic ProN',Meiryo,sans-
 input,select{width:100%;padding:11px;margin-top:8px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:15px;outline:none;font-family:inherit;}
 .row-group{display:flex;gap:8px;align-items:center;margin-top:8px;}
 .row-group label{font-size:12px;color:#666;white-space:nowrap;}
+#task-form-body .row-group label{width:88px;flex-shrink:0;display:inline-block;}
 #add-btn{width:100%;background:var(--primary);color:#fff;border:none;padding:14px;border-radius:10px;font-weight:bold;cursor:pointer;margin-top:10px;font-size:15px;transition:.2s;}
 #add-btn:hover{background:var(--primary-dark);}
 #add-btn.edit-mode{background:#2196f3;}
@@ -331,7 +332,10 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <!-- 期限/検査日 -->
       <div class="row-group">
         <label id="task-date-label">📅 期限日:</label>
-        <input type="datetime-local" id="task-date-input" style="flex:1;margin:0;">
+        <div style="display:flex;gap:6px;flex:1;">
+          <input type="date" id="task-date-input-d" style="flex:2;margin:0;">
+          <input type="time" id="task-date-input-t" style="flex:1;margin:0;" placeholder="時刻(任意)">
+        </div>
       </div>
       <!-- 発行状況 (要領書/成績書のみ) -->
       <div class="row-group" id="task-status-row">
@@ -939,7 +943,7 @@ function startEditManual(i){
   f('task-rev-input').value=t.rev||'';
   f('task-kiki-input').value=t.kiki||'';
   f('task-vendor-input').value=t.vendor||'';
-  f('task-date-input').value=t.date||'';
+  (function(){var dv=t.date||'';var p=dv.split('T');f('task-date-input-d').value=p[0]||'';f('task-date-input-t').value=p[1]||'';})();
   f('task-status-input').value=t.status||'未発行';
   f('task-result-input').value=t.result||'';
   f('task-remind-input').value=t.remindDaysBefore||3;
@@ -970,7 +974,7 @@ addBtn.addEventListener('click',()=>{
   const kiki=f('task-kiki-input').value.trim();
   const rev=f('task-rev-input').value.trim();
   const vendor=f('task-vendor-input').value.trim();
-  const date=f('task-date-input').value;
+  const date=(function(){var d=f('task-date-input-d').value,t2=f('task-date-input-t').value;return d?(t2?d+'T'+t2:d):'';})();
   const status=cat!=='検査日'?f('task-status-input').value:'';
   const result=cat==='検査日'?f('task-result-input').value:'';
   const biko=f('task-biko-input').value.trim();
@@ -983,7 +987,7 @@ addBtn.addEventListener('click',()=>{
     const nr={id:kNextId++,anken,prno,ono,kiki:kiki||biko,y_rev:cat==='要領書'?rev:'',s_rev:cat==='成績書'?rev:'',vendor,y_status:cat==='要領書'?status:'',y_date:cat==='要領書'?date:'',y_biko:'',s_status:cat==='成績書'?status:'',s_date:cat==='成績書'?date:'',s_biko:'',kensa_date:cat==='検査日'?date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:cat==='検査日'?result:'',kensa_biko:cat==='検査日'?biko:'',kensa_items:cat==='要領書'||cat==='成績書'?[{date:cat==='検査日'?date:'',kubun:'完成検査',place:'',inspector:'',result:'',k_remind:0,k_hidden:false}]:[],remindDaysBefore:remind};
     kRecords.push(nr);kSave();ensureAnkenColors();saveOshiData();populateAnkenDl();kPopulateAnken();kRenderDash();
   }
-  ['task-cat-input','task-anken-input','task-prno-input','task-ono-input','task-rev-input','task-kiki-input','task-vendor-input','task-date-input','task-biko-input'].forEach(id=>f(id).value='');
+  ['task-cat-input','task-anken-input','task-prno-input','task-ono-input','task-rev-input','task-kiki-input','task-vendor-input','task-date-input-d','task-date-input-t','task-biko-input'].forEach(id=>f(id).value='');
   f('task-status-input').value='未発行';f('task-result-input').value='';f('task-remind-input').value='3';onCatChange();
   renderTasks();toast('タスクを追加しました');
 });
