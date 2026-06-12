@@ -272,7 +272,7 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
   </div>
 
   <!-- フィルター -->
-  <div class="task-filter-bar">
+  <div class="task-filter-bar" style="position:sticky;top:108px;z-index:98;background:var(--bg);padding:8px 16px;margin:0 -16px 12px;box-shadow:0 2px 6px rgba(0,0,0,.07);">
     <button class="task-filter-btn f-all active" onclick="setTaskFilter('all')">📋 全て</button>
     <button class="task-filter-btn f-yoryo" onclick="setTaskFilter('要領書')">📄 要領書</button>
     <button class="task-filter-btn f-seiseki" onclick="setTaskFilter('成績書')">📝 成績書</button>
