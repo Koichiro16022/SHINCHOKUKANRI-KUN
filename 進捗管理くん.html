@@ -1678,7 +1678,9 @@ function cdlShow(inputId, listId){
 }
 function cdlPick(inputId, listId, val){
   document.getElementById(inputId).value=val;
-  document.getElementById(listId).classList.remove('open');
+  // openクラスの解除をclickイベント後に遅延させる（即時removeするとclickイベントのtargetが
+  // 背面の要素にすり替わり、モーダルの背景クリック判定が誤発火することがあるため）
+  setTimeout(()=>{const l=document.getElementById(listId);if(l)l.classList.remove('open');},0);
 }
 document.addEventListener('click', function(e){
   document.querySelectorAll('.cdl-list.open').forEach(function(l){
