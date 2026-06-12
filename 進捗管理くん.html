@@ -671,11 +671,12 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
       <div class="fg full">
         <label>結果</label>
         <div class="cdl-wrap">
-          <input type="text" id="kResultInput" placeholder="合格 / 不合格 / 保留（自由入力可）" autocomplete="off" onfocus="cdlShow('kResultInput','kresult-cdl')" oninput="cdlShow('kResultInput','kresult-cdl')" onkeydown="if(event.key==='Enter')kConfirmResult()">
+          <input type="text" id="kResultInput" placeholder="合格 / 不合格 / 保留 / 不合格／特採（自由入力可）" autocomplete="off" onfocus="cdlShow('kResultInput','kresult-cdl')" oninput="cdlShow('kResultInput','kresult-cdl')" onkeydown="if(event.key==='Enter')kConfirmResult()">
           <div class="cdl-list" id="kresult-cdl">
             <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','合格')">合格</div>
             <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','不合格')">不合格</div>
             <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','保留')">保留</div>
+            <div class="cdl-item" onmousedown="cdlPick('kResultInput','kresult-cdl','不合格／特採')">不合格／特採</div>
           </div>
         </div>
       </div>
@@ -818,8 +819,8 @@ function getKPendingTasks(){
     (function(){
       var items=r.kensa_items&&r.kensa_items.length?r.kensa_items:(r.kensa_date?[{date:r.kensa_date,kubun:r.kensa_kubun||'',place:r.kensa_place||'',inspector:r.kensa_inspector||'',result:r.kensa_result||'',k_remind:r.k_remind||r.remindDaysBefore||0,k_hidden:r.k_hidden||false}]:[]);
       items.forEach(function(it,idx){
-        if((it.date||it.kubun)&&!it.result&&!it.k_hidden){
-          tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',_kIdx:idx,category:'検査日',anken:r.anken||'',prno:r.prno||'',ono:r.ono||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:it.date,status:'',kubun:it.kubun||'',inspector:it.inspector||'',place:it.place||'',biko:r.kensa_biko||'',remindDaysBefore:it.k_remind||0});
+        if((it.date||it.kubun)&&it.result!=='合格'&&!it.k_hidden){
+          tasks.push({_isK:true,_kId:r.id,_kType:'kensabi',_kIdx:idx,category:'検査日',anken:r.anken||'',prno:r.prno||'',ono:r.ono||'',kiki:r.kiki||'',rev:r.rev||'',vendor:r.vendor||'',date:it.date,status:it.result||'',kubun:it.kubun||'',inspector:it.inspector||'',place:it.place||'',biko:r.kensa_biko||'',remindDaysBefore:it.k_remind||0});
         }
       });
     })();
@@ -882,7 +883,7 @@ function renderTasks(){
     const ankenBadge=t.anken?`<span style="font-size:10px;color:#fff;background:${color};border-radius:8px;padding:2px 8px;">${escH(t.anken)}</span>`:'';
 
     // 発行状況バッジ
-    const stMap={'未着手':'#94A3B8','チェック中':'#3B82F6','未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981'};
+    const stMap={'未着手':'#94A3B8','チェック中':'#3B82F6','未発行':'#EF4444','回覧中':'#F59E0B','特採発行待ち':'#8B5CF6','発行済':'#10B981','合格':'#10B981','不合格':'#EF4444','保留':'#F59E0B','不合格／特採':'#8B5CF6'};
     const stBadge=t.status?`<span style="font-size:10px;color:#fff;background:${stMap[t.status]||'#888'};border-radius:8px;padding:2px 8px;">${escH(t.status)}</span>`:'';
     const kubunBadge=t.kubun?`<span style="font-size:10px;color:#fff;background:#0EA5E9;border-radius:8px;padding:2px 8px;">${escH(t.kubun)}</span>`:'';
     const revBadge=(t.rev&&t.category!=='検査日')?`<span style="font-size:10px;color:#555;background:#E5E7EB;border-radius:8px;padding:2px 8px;">Rev.${escH(t.rev)}</span>`:'';
@@ -1095,7 +1096,8 @@ window.archiveBulkDelete=function(){
 function renderArchive(){
   const al=document.getElementById('archive-list'),ac=document.getElementById('archive-count');
   const aq=(document.getElementById('main-search')?.value||'').toLowerCase().trim();
-  if(_lastArchiveQuery!==aq){archiveSelected.clear();_lastArchiveQuery=aq;}
+  const _archiveQueryKey=aq+'|'+activeTaskFilter;
+  if(_lastArchiveQuery!==_archiveQueryKey){archiveSelected.clear();_lastArchiveQuery=_archiveQueryKey;}
   // kRecordsの発行済み・結果あり（非表示リストを除外）
   const kDone=[];
   kRecords.forEach(r=>{
@@ -1105,23 +1107,29 @@ function renderArchive(){
     const kItems=r.kensa_items&&r.kensa_items.length?r.kensa_items:(r.kensa_date||r.kensa_result?[{date:r.kensa_date||'',kubun:r.kensa_kubun||'',result:r.kensa_result||''}]:[]);
     kItems.forEach((it,idx)=>{
       const key_k=`${r.id}_k${idx}`;
-      if(it.result&&!hiddenKDone.includes(key_k)) kDone.push({_key:key_k,category:'検査日',kubun:it.kubun||'',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:it.result,date:it.date});
+      if(it.result==='合格'&&!hiddenKDone.includes(key_k)) kDone.push({_key:key_k,category:'検査日',kubun:it.kubun||'',anken:r.anken,prno:r.prno,kiki:r.kiki,vendor:r.vendor,status:it.result,date:it.date});
     });
   });
-  // 検索フィルター適用
+  // カテゴリフィルター（要領書/成績書/検査日タブ）適用
+  const grandTotal=archivedTasks.length+kDone.length;
   let filteredArchived=archivedTasks.map((t,i)=>({...t,_origIdx:i}));
   let filteredKDone=[...kDone];
+  if(activeTaskFilter!=='all'){
+    filteredArchived=filteredArchived.filter(t=>t.category===activeTaskFilter);
+    filteredKDone=filteredKDone.filter(t=>t.category===activeTaskFilter);
+  }
+  // 検索フィルター適用
   if(aq){
     filteredArchived=filteredArchived.filter(t=>[t.prno,t.kiki,t.text,t.vendor,t.anken,t.status].join(' ').toLowerCase().includes(aq));
     filteredKDone=filteredKDone.filter(t=>[t.prno,t.kiki,t.vendor,t.anken,t.status].join(' ').toLowerCase().includes(aq));
   }
-  const totalDone=archivedTasks.length+kDone.length;
   const totalFiltered=filteredArchived.length+filteredKDone.length;
-  ac.textContent=aq?`${totalFiltered}/${totalDone}`:totalDone;al.innerHTML='';
-  if(aq&&totalFiltered===0){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">該当する完了タスクはありません</li>';if(totalDone>0&&al.style.display==='none'){al.style.display='block';}updateArchiveBulkUI();return;}
-  if(!totalDone){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">完了済みタスクはありません</li>';updateArchiveBulkUI();return;}
-  // 検索中は自動展開
-  if(aq&&al.style.display==='none') al.style.display='block';
+  const narrowed=aq||activeTaskFilter!=='all';
+  ac.textContent=narrowed?`${totalFiltered}/${grandTotal}`:grandTotal;al.innerHTML='';
+  if(narrowed&&totalFiltered===0){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">該当する完了タスクはありません</li>';if(grandTotal>0&&al.style.display==='none'){al.style.display='block';}updateArchiveBulkUI();return;}
+  if(!grandTotal){al.innerHTML='<li style="color:#bbb;font-size:13px;justify-content:center;border-left:none;background:none;box-shadow:none;">完了済みタスクはありません</li>';updateArchiveBulkUI();return;}
+  // 検索・フィルター中は自動展開
+  if(narrowed&&al.style.display==='none') al.style.display='block';
   // 手動完了タスク
   filteredArchived.forEach((t,_)=>{const i=t._origIdx;
     const color=getAnkenColor(t.anken||'');
