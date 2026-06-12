@@ -17,7 +17,6 @@ if(location.protocol==='file:'){
 <meta name="theme-color" content="#3B82F6">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>進捗管理くん v1.0</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{--primary:#ff6b6b;--primary-dark:#e05555;--blue:#5B5FEF;--blue-dark:#4346C9;--bg:#f8f9fa;--card:#fff;--text:#333;--muted:#888;--border:#eee;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -178,9 +177,6 @@ table.k-tbl td{padding:8px 11px;font-size:12px;vertical-align:middle;}
 .sched-meta{font-size:11px;color:var(--muted);margin-top:2px;}
 
 /* ドロップゾーン */
-.drop-zone{border:2px dashed #ddd;border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:#fafafa;}
-.drop-zone:hover,.drop-zone.dov{border-color:var(--blue);background:#EEF0FF;}
-.drop-zone .dz-icon{font-size:36px;margin-bottom:8px;}
 
 /* モーダル */
 .k-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
@@ -403,7 +399,6 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
     <button class="kbtn kbtn-primary" id="ktab-dash" onclick="openKTab('dash')" style="flex:1;border-radius:8px;">📊 ダッシュボード</button>
     <button class="kbtn" id="ktab-sched" onclick="openKTab('sched')" style="flex:1;border-radius:8px;background:transparent;color:#888;">📅 検査予定</button>
     <button class="kbtn" id="ktab-list" onclick="openKTab('list')" style="flex:1;border-radius:8px;background:transparent;color:#888;">📋 マスターリスト</button>
-    <button class="kbtn" id="ktab-import" onclick="openKTab('import')" style="flex:1;border-radius:8px;background:transparent;color:#888;">📥 インポート</button>
   </div>
 
   <!-- ダッシュボード -->
@@ -496,18 +491,6 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
     <div class="sched-list" id="kSchedList"></div>
   </div>
 
-  <!-- インポート -->
-  <div id="kpanel-import" style="display:none;max-width:520px;">
-    <h3 style="margin-bottom:10px;">📥 Excelインポート</h3>
-    <p style="color:var(--muted);font-size:12px;margin-bottom:14px;line-height:1.6;">週報Excelファイル（.xlsx）をドロップして最新データを取り込みます。<br>同一PRNo+機器名称のレコードは上書きされます。</p>
-    <div class="drop-zone" id="kDropZone" onclick="document.getElementById('kFileInput').click()"
-         ondragover="kDzOver(event)" ondragleave="kDzLeave()" ondrop="kDzDrop(event)">
-      <div class="dz-icon">📂</div>
-      <p style="color:var(--muted);font-size:13px;">ここにExcelをドロップ、またはクリックして選択</p>
-    </div>
-    <input type="file" id="kFileInput" accept=".xlsx" style="display:none" onchange="kImportFile(this.files[0])">
-    <div id="kImportLog" style="margin-top:12px;font-size:12px;color:var(--muted);"></div>
-  </div>
 </div>
 
 <!-- ━━━━━━━━━━━━━━━ PANEL: 設定 ━━━━━━━━━━━━━━━ -->
@@ -1292,10 +1275,10 @@ function kRenderSched(){
 }
 
 function openKTab(name){
-  ['dash','list','sched','import'].forEach(t=>{
+  ['dash','list','sched'].forEach(t=>{
     document.getElementById('kpanel-'+t).style.display=t===name?'block':'none';
   });
-  const btns=['dash','list','sched','import'];
+  const btns=['dash','list','sched'];
   btns.forEach(t=>{
     const b=document.getElementById('ktab-'+t);
     if(t===name){b.style.background='var(--blue)';b.style.color='#fff';}
@@ -1364,30 +1347,6 @@ function kExportCSV(){
   const hdrs=['案件名','PRNo','機器名称','要領書Rev.','成績書Rev.','ベンダー名','要領書状況','要領書備考','成績書状況','成績書備考','検査日','区分','検査場所','検査員','検査結果'];
   const csv=[hdrs,...rows.map(r=>[r.anken,r.prno,r.kiki,r.y_rev||r.rev||"",r.s_rev||r.rev||"",r.vendor,r.y_status,r.y_biko,r.s_status,r.s_biko,r.kensa_date,r.kensa_kubun,r.kensa_place,r.kensa_inspector,r.kensa_result])].map(row=>row.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));a.download=`検査管理_${KTODAY}.csv`;a.click();toast('📥 CSVを出力しました');
-}
-
-// インポート
-function kDzOver(e){e.preventDefault();document.getElementById('kDropZone').classList.add('dov');}
-function kDzLeave(){document.getElementById('kDropZone').classList.remove('dov');}
-function kDzDrop(e){e.preventDefault();kDzLeave();kImportFile(e.dataTransfer.files[0]);}
-function kImportFile(file){
-  if(!file)return;const log=document.getElementById('kImportLog');log.textContent='読み込み中...';
-  const r=new FileReader();
-  r.onload=e=>{
-    try{
-      const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
-      const ws=wb.Sheets['週報'];if(!ws){log.textContent='「週報」シートが見つかりません';return;}
-      const rows=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,dateNF:'yyyy-mm-dd'});
-      function gv(row,col){return(row&&row[col-1]!=null)?String(row[col-1]).trim():'';}
-      let added=0,updated=0;
-      function proc(s,e2,type){for(let i=s-1;i<Math.min(e2,rows.length);i++){const row=rows[i];const an=gv(row,5),pr=gv(row,8),ki=gv(row,11),rv=gv(row,19),vd=gv(row,21),st=gv(row,27);if(!pr&&!an)continue;const ex=kRecords.find(r2=>r2.prno===pr&&r2.kiki===ki);if(ex){if(type==='y'&&st)ex.y_status=st;if(type==='s'&&st)ex.s_status=st;if(!ex.vendor&&vd)ex.vendor=vd;updated++;}else{const nr={id:kNextId++,anken:an,prno:pr,kiki:ki,rev:rv,vendor:vd,y_status:type==='y'?st:'',y_biko:'',s_status:type==='s'?st:'',s_biko:'',kensa_date:'',kensa_kubun:'',kensa_place:'',kensa_inspector:'',kensa_result:''};kRecords.push(nr);added++;}}}
-      proc(9,131,'y');proc(136,408,'s');
-      for(let i=413;i<Math.min(497,rows.length);i++){const row=rows[i];const an=gv(row,2),dt=gv(row,5),pr=gv(row,8),ki=gv(row,11),ku=gv(row,19),vd=gv(row,21),pl=gv(row,27),ins=gv(row,30),res=gv(row,34);if(!pr&&!an)continue;const ex=kRecords.find(r2=>r2.prno===pr&&r2.kiki===ki);if(ex){if(dt)ex.kensa_date=dt;if(ku)ex.kensa_kubun=ku;if(pl)ex.kensa_place=pl;if(ins)ex.kensa_inspector=ins;if(res)ex.kensa_result=res;updated++;}}
-      kSave();kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
-      log.innerHTML=`<span style="color:#10B981;font-weight:bold;">✅ 完了: 新規 ${added}件 / 更新 ${updated}件</span>`;
-      toast(`📥 インポート完了 +${added}件`);
-    }catch(err){log.textContent='エラー: '+err.message;}
-  };r.readAsBinaryString(file);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
