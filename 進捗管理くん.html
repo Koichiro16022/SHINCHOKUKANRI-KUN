@@ -1672,9 +1672,23 @@ function cdlShow(inputId, listId){
   const list=document.getElementById(listId);
   const rect=inp.getBoundingClientRect();
   list.style.left=rect.left+'px';
-  list.style.top=(rect.bottom+2)+'px';
   list.style.width=rect.width+'px';
+  list.style.maxHeight='200px';
+  list.style.top=(rect.bottom+2)+'px';
   list.classList.add('open');
+  // 画面下に収まらない場合は表示位置・高さを調整（はみ出すと背景クリック扱いになり選択できないため）
+  const vh=window.innerHeight;
+  const listH=list.offsetHeight;
+  const spaceBelow=vh-rect.bottom-2;
+  if(listH>spaceBelow){
+    const spaceAbove=rect.top-2;
+    if(spaceAbove>spaceBelow){
+      list.style.maxHeight=Math.max(Math.min(listH,spaceAbove)-4,60)+'px';
+      list.style.top=Math.max(rect.top-list.offsetHeight-2,4)+'px';
+    }else{
+      list.style.maxHeight=Math.max(spaceBelow-4,60)+'px';
+    }
+  }
 }
 function cdlPick(inputId, listId, val){
   document.getElementById(inputId).value=val;
