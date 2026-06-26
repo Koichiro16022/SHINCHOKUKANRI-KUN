@@ -539,7 +539,6 @@ canvas{position:fixed;top:0;left:0;pointer-events:none;z-index:2100;}
 })()" style="margin-top:10px;background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;cursor:pointer;">📁 バックアップフォルダを選択</button>
       <span id="backup-dir-status" style="font-size:12px;color:#10B981;margin-left:10px;"></span>
       <div id="backup-last-time" style="font-size:12px;color:#888;margin-top:6px;"></div>
-      <div id="backup-last-time" style="font-size:12px;color:#888;margin-top:6px;"></div>
     </div>
     <div style="border-bottom:1px solid #eee;padding-bottom:18px;margin-bottom:18px;">
       <label style="font-weight:bold;font-size:14px;">🎨 案件カラー管理 <span style="font-weight:normal;font-size:12px;color:#999;">（案件ごとに色を設定）</span></label>
@@ -1313,7 +1312,7 @@ function kInit(){
   kSave();
   kPopulateAnken();kRenderDash();kApplyFilters();kRenderSched();
 }
-function kSave(){try{localStorage.setItem('sg_kensa',JSON.stringify({records:kRecords,nextId:kNextId}));}catch(e){toast('保存できませんでした',true);}}
+function kSave(){try{localStorage.setItem('sg_kensa',JSON.stringify({records:kRecords,nextId:kNextId}));autoBackup();}catch(e){toast('保存できませんでした',true);}}
 
 function kPopulateAnken(){
   const ankens=[...new Set(kRecords.map(r=>r.anken).filter(Boolean))].sort();
