@@ -1541,7 +1541,7 @@ window.autoBackup=async function(){
   if(!window.isBackupEnabled())return;
   if(!window._backupDirHandle)return;
   try{
-    const perm=await window._backupDirHandle.requestPermission({mode:'readwrite'});
+    const perm=await window._backupDirHandle.queryPermission({mode:'readwrite'});
     if(perm!=='granted')return;
     const now=new Date();
     const ds=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
